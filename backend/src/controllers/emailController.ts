@@ -1,14 +1,13 @@
 import type { Request, Response } from "express";
-import { BlobStorageService } from "../services/blobStorageService.js";
-import { EmailService } from "../services/emailService.js";
+import type { BlobStorageService } from "../services/blobStorageService.js";
+import type { EmailService } from "../services/emailService.js";
 
 export class EmailController {
-  private blobStorageService: BlobStorageService;
-  private emailService: EmailService;
-
-  constructor() {
-    this.blobStorageService = new BlobStorageService();
-    this.emailService = new EmailService();
+  constructor(
+    private blobStorageService: BlobStorageService,
+    private emailService: EmailService,
+  ) {
+    this.sendMail = this.sendMail.bind(this);
   }
 
   async sendMail(req: Request, res: Response): Promise<void> {

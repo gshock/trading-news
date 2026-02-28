@@ -7,11 +7,19 @@ export class EmailService {
   private blobStorageService: BlobStorageService;
 
   constructor() {
+    const emailUser = process.env.EMAIL_USER;
+    const emailPass = process.env.EMAIL_PASS;
+    if (!emailUser || !emailPass) {
+      throw new Error(
+        "EmailService configuration error: EMAIL_USER and EMAIL_PASS environment variables must be set.",
+      );
+    }
+
     this.transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: emailUser,
+        pass: emailPass,
       },
     });
     this.blobStorageService = new BlobStorageService();
