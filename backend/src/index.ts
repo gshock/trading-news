@@ -1,7 +1,8 @@
-import express from "express";
 import dotenv from "dotenv";
+import express from "express";
 import emailRoutes from "./routes/emailRoutes.js";
 
+// Load environment variables FIRST
 dotenv.config();
 
 const app = express();
