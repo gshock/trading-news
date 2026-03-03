@@ -19,8 +19,8 @@ function initializeServices() {
   return emailController;
 }
 
-// GET /send-mail
-router.get("/send-mail", (req, res) => {
+// POST /send-mail
+router.post("/send-mail", (req, res) => {
   const controller = initializeServices();
   return controller.sendMail(req, res);
 });
