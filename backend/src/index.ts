@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 import express from "express";
 import emailRoutes from "./routes/emailRoutes.js";
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+import { TableStorageService } from "./services/tableStorageService.js";
 
 // Load environment variables FIRST
 dotenv.config();
@@ -18,7 +20,23 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1", emailRoutes);
+app.use("/api/v1", subscriptionRoutes);
 
-app.listen(port, () => {
-  console.log(`Server is running on ${port}`);
-});
+// Initialize table storage and start server
+async function startServer() {
+  try {
+    // Ensure Azure Table Storage is set up
+    const tableService = new TableStorageService();
+    await tableService.ensureTableExists();
+    console.log("Azure Table Storage initialized");
+
+    app.listen(port, () => {
+      console.log(`Server is running on ${port}`);
+    });
+  } catch (error) {
+    console.error("Failed to initialize server:", error);
+    process.exit(1);
+  }
+}
+
+startServer();
