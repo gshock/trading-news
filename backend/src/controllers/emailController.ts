@@ -27,7 +27,7 @@ export class EmailController {
       const snapshotData =
         await this.blobStorageService.getSnapshotIndex(folderTimestamp);
 
-      const recipients = ["gerardo@myresumator.com"];
+      const recipients = ["segundaviddev@gmail.com"];
 
       // Send email
       await this.emailService.sendTradingUpdate(snapshotData, recipients);

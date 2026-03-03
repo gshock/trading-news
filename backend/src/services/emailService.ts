@@ -33,11 +33,11 @@ export class EmailService {
 
     let imagesHtml = "";
     entries.forEach((entry) => {
-      const imageUrl = this.blobStorageService.getBlobUrl(entry.path);
+      const cid = `chart-${entry.symbol.toLowerCase()}`;
       imagesHtml += `
         <div style="margin: 20px 0; text-align: center;">
           <h3 style="color: #333; margin-bottom: 10px;">${entry.symbol}</h3>
-          <img src="${imageUrl}" alt="${entry.symbol} Trading Chart" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+          <img src="cid:${cid}" alt="${entry.symbol} Trading Chart" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">
         </div>
       `;
     });
@@ -79,11 +79,18 @@ export class EmailService {
   ): Promise<void> {
     const htmlContent = this.createEmailHtml(snapshotData);
 
+    const attachments = snapshotData.entries.map((entry) => ({
+      filename: `${entry.symbol}.png`,
+      path: this.blobStorageService.getBlobUrl(entry.path),
+      cid: `chart-${entry.symbol.toLowerCase()}`,
+    }));
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: recipients,
       subject: `Trading Update ${snapshotData.folderTimestamp}`,
       html: htmlContent,
+      attachments,
     };
 
     try {
