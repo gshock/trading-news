@@ -55,7 +55,6 @@ export class EmailService {
         </head>
         <body>
           <div class="container">
-            <h1>📈 Trading News Update</h1>
             <div class="header-info">
               <p><strong>Snapshot:</strong> ${folderTimestamp}</p>
               <p><strong>Generated:</strong> ${date} at ${time}</p>
@@ -80,7 +79,7 @@ export class EmailService {
     const htmlContent = this.createEmailHtml(snapshotData);
 
     const attachments = snapshotData.entries.map((entry) => ({
-      filename: `${entry.symbol}.png`,
+      filename: entry.fileName,
       path: this.blobStorageService.getBlobUrl(entry.path),
       cid: `chart-${entry.symbol.toLowerCase()}`,
     }));
