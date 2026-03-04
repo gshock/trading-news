@@ -45,7 +45,8 @@ export class EmailService {
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: recipients,
+      to: process.env.EMAIL_USER,
+      bcc: recipients,
       subject: `Daily Trading Update — ${formatLongDate(snapshotData.createdUtc)}`,
       html,
       attachments,
