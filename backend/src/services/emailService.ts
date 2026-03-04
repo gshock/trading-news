@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import type { SnapshotIndex } from "../types/snapshot.js";
 import { BlobStorageService } from "./blobStorageService.js";
 import { TradingUpdateTemplate } from "../templates/tradingUpdate.template.js";
+import { formatSubjectTimestamp } from "../utils/formatDate.js";
 
 export class EmailService {
   private transporter;
@@ -45,7 +46,7 @@ export class EmailService {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: recipients,
-      subject: `Trading Update ${snapshotData.folderTimestamp}`,
+      subject: `Daily Trading Update — ${formatSubjectTimestamp(snapshotData.folderTimestamp)}`,
       html,
       attachments,
     };

@@ -1,4 +1,5 @@
 import type { SnapshotEntry, SnapshotIndex } from "../types/snapshot.js";
+import { formatLongDate, formatTime, formatSentAt } from "../utils/formatDate.js";
 
 export class TradingUpdateTemplate {
   private readonly COLS = 5;
@@ -31,8 +32,8 @@ export class TradingUpdateTemplate {
     let rows = "";
 
     for (let i = 0; i < entries.length; i += this.COLS) {
-      const rowEntries = entries.slice(i, i + this.COLS);
-      while (rowEntries.length < this.COLS) rowEntries.push(null as any);
+      const rowEntries: (SnapshotEntry | null)[] = entries.slice(i, i + this.COLS);
+      while (rowEntries.length < this.COLS) rowEntries.push(null);
 
       const cells = rowEntries
         .map((entry) => (entry ? this.buildChartCell(entry) : this.buildEmptyCell()))
@@ -47,26 +48,9 @@ export class TradingUpdateTemplate {
   render(snapshotData: SnapshotIndex): string {
     const { createdUtc, entries } = snapshotData;
 
-    const date = new Date(createdUtc).toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
-    const time = new Date(createdUtc).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZoneName: "short",
-    });
-
-    const sentAt = new Date().toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const date = formatLongDate(createdUtc);
+    const time = formatTime(createdUtc);
+    const sentAt = formatSentAt();
 
     const chartGrid = this.buildChartGrid(entries);
     const symbolCount = entries.length;
