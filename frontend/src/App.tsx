@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { TabItem, Tab } from "./types/tabs";
+import type { TabItem, Tab, TopicId, Topic } from "./types/tabs";
+import { Checkbox } from "./components/checkbox";
 
 const TABS: Tab[] = [
   { id: "subscribe", label: "Subscribe" },
@@ -13,13 +14,24 @@ const CTA_LABEL: Record<TabItem, string> = {
   unsubscribe: "Unsubscribe",
 };
 
+const TOPICS: Topic[] = [
+  { id: "945AM", label: "9:45 AM" },
+  { id: "10AM", label: "10:00 AM" },
+];
+
 function App() {
   const [tab, setTab] = useState<TabItem>("subscribe");
   const [email, setEmail] = useState("");
+  const [topics, setTopics] = useState<TopicId[]>([]);
+
+  const toggleTopic = (id: TopicId) => {
+    setTopics((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    );  
+  };
 
   return (
     <div className="min-h-screen bg-[#080d14] text-slate-100 flex flex-col">
-
       {/* ── HEADER ── */}
       <header className="border-b border-white/6 px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
@@ -40,7 +52,6 @@ function App() {
       {/* ── MAIN ── */}
       <main className="flex-1 flex items-start justify-center px-6 pt-16 pb-28">
         <div className="w-full max-w-md">
-
           {/* Hero */}
           <div className="mb-10">
             <p className="text-[10px] font-bold tracking-[0.25em] text-blue-500 uppercase mb-4">
@@ -56,7 +67,6 @@ function App() {
 
           {/* Card */}
           <div className="bg-[#0c1420] border border-white/[0.07] rounded-lg overflow-hidden">
-
             {/* Tabs */}
             <div className="flex border-b border-white/[0.07]">
               {TABS.map((t) => (
@@ -89,6 +99,24 @@ function App() {
                 className="w-full bg-[#080d14] border border-white/9 rounded px-4 py-3 text-sm text-white placeholder-slate-700 outline-none focus:border-blue-600/60 transition-colors mb-4"
               />
 
+              {tab === "subscribe" && (
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold text-slate-500 tracking-[0.15em] uppercase mb-3">
+                    Sessions
+                  </p>
+                  <div className="flex gap-3">
+                    {TOPICS.map((topic) => (
+                      <Checkbox
+                        key={topic.id}
+                        label={topic.label}
+                        checked={topics.includes(topic.id)}
+                        onChange={() => toggleTopic(topic.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <button
                 type="submit"
                 className={`w-full py-3 rounded text-sm font-semibold tracking-wide transition-colors cursor-pointer ${
@@ -118,7 +146,6 @@ function App() {
           </p>
         </div>
       </footer>
-
     </div>
   );
 }
