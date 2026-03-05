@@ -43,8 +43,9 @@ export class EmailService {
   async sendTradingUpdate(
     snapshotData: SnapshotIndex,
     recipients: string[],
+    title: string,
   ): Promise<void> {
-    const html = this.tradingUpdateTemplate.render(snapshotData);
+    const html = this.tradingUpdateTemplate.render(snapshotData, title);
 
     const attachments = snapshotData.entries.map((entry) => {
       const ext = extname(entry.fileName).toLowerCase();
@@ -61,7 +62,7 @@ export class EmailService {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_USER,
       bcc: recipients,
-      subject: `Daily Trading Update — ${formatLongDate(snapshotData.createdUtc)}`,
+      subject: `${title} — ${formatLongDate(snapshotData.createdUtc)}`,
       html,
       attachments,
     };

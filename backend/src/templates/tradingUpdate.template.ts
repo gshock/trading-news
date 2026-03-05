@@ -45,7 +45,7 @@ export class TradingUpdateTemplate {
     return rows;
   }
 
-  render(snapshotData: SnapshotIndex): string {
+  render(snapshotData: SnapshotIndex, title: string): string {
     const { createdUtc, entries } = snapshotData;
 
     const date = formatLongDate(createdUtc);
@@ -60,7 +60,7 @@ export class TradingUpdateTemplate {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Market Snapshot — ${date}</title>
+  <title>${title} — ${date}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:Georgia,'Times New Roman',serif;">
 
@@ -83,7 +83,7 @@ export class TradingUpdateTemplate {
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td style="vertical-align:bottom;">
-                    <span style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:#0f172a;letter-spacing:-0.3px;">Market Snapshot</span>
+                    <span style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:#0f172a;letter-spacing:-0.3px;">${title}</span>
                   </td>
                   <td style="text-align:right;vertical-align:bottom;">
                     <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#94a3b8;letter-spacing:0.3px;">${date}</span>
