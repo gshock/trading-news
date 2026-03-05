@@ -9,7 +9,7 @@ export class TradingUpdateTemplate {
     const cid = `chart-${entry.symbol.toLowerCase()}`;
     return `
     <td width="${this.CELL_WIDTH + 8}" style="width:${this.CELL_WIDTH + 8}px;padding:4px;vertical-align:top;">
-      <table cellpadding="0" cellspacing="0" border="0" width="${this.CELL_WIDTH}" style="width:${this.CELL_WIDTH}px;border-radius:6px;overflow:hidden;border:1px solid #e2e8f0;">
+      <table cellpadding="0" cellspacing="0" border="0" width="${this.CELL_WIDTH}" style="width:${this.CELL_WIDTH}px;border-radius:6px;border:1px solid #e2e8f0;">
         <tr>
           <td style="padding:0;line-height:0;">
             <img src="cid:${cid}" alt="${entry.symbol}" width="${this.CELL_WIDTH}" style="display:block;width:${this.CELL_WIDTH}px;height:auto;">
