@@ -13,12 +13,12 @@ export class EmailController {
   async sendMail(req: Request, res: Response): Promise<void> {
     try {
       // Get folder timestamp
-      const folderTimestamp = req.query.f as string;
+      const folderTimestamp = req.body.f as string;
 
       if (!folderTimestamp) {
         res.status(400).json({
           error: "Bad request",
-          message: "Missing folder query parameter",
+          message: "Missing folder in request body",
         });
         return;
       }
