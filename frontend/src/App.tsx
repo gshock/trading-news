@@ -27,7 +27,7 @@ function App() {
   const toggleTopic = (id: TopicId) => {
     setTopics((prev) =>
       prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
-    );  
+    );
   };
 
   return (
