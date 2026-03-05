@@ -23,6 +23,8 @@ export class EmailController {
         return;
       }
 
+      const title = (req.body.title as string) || "Market Snapshot";
+
       // Fetch snapshot data from blob storage
       const snapshotData =
         await this.blobStorageService.getSnapshotIndex(folderTimestamp);
@@ -30,7 +32,11 @@ export class EmailController {
       const recipients = ["gerardo@myresumator.com", "segundaviddev@gmail.com"];
 
       // Send email
-      await this.emailService.sendTradingUpdate(snapshotData, recipients);
+      await this.emailService.sendTradingUpdate(
+        snapshotData,
+        recipients,
+        title,
+      );
 
       res.status(200).json({
         message: "Email sent successfully",

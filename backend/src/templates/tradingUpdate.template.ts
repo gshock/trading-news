@@ -9,7 +9,7 @@ export class TradingUpdateTemplate {
     const cid = `chart-${entry.symbol.toLowerCase()}`;
     return `
     <td width="${this.CELL_WIDTH + 8}" style="width:${this.CELL_WIDTH + 8}px;padding:4px;vertical-align:top;">
-      <table cellpadding="0" cellspacing="0" border="0" width="${this.CELL_WIDTH}" style="width:${this.CELL_WIDTH}px;border-radius:6px;overflow:hidden;border:1px solid #e2e8f0;">
+      <table cellpadding="0" cellspacing="0" border="0" width="${this.CELL_WIDTH}" style="width:${this.CELL_WIDTH}px;border-radius:6px;border:1px solid #e2e8f0;">
         <tr>
           <td style="padding:0;line-height:0;">
             <img src="cid:${cid}" alt="${entry.symbol}" width="${this.CELL_WIDTH}" style="display:block;width:${this.CELL_WIDTH}px;height:auto;">
@@ -45,7 +45,7 @@ export class TradingUpdateTemplate {
     return rows;
   }
 
-  render(snapshotData: SnapshotIndex): string {
+  render(snapshotData: SnapshotIndex, title: string): string {
     const { createdUtc, entries } = snapshotData;
 
     const date = formatLongDate(createdUtc);
@@ -60,7 +60,7 @@ export class TradingUpdateTemplate {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Market Snapshot — ${date}</title>
+  <title>${title} — ${date}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:Georgia,'Times New Roman',serif;">
 
@@ -83,7 +83,7 @@ export class TradingUpdateTemplate {
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td style="vertical-align:bottom;">
-                    <span style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:#0f172a;letter-spacing:-0.3px;">Market Snapshot</span>
+                    <span style="font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:#0f172a;letter-spacing:-0.3px;">${title}</span>
                   </td>
                   <td style="text-align:right;vertical-align:bottom;">
                     <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#94a3b8;letter-spacing:0.3px;">${date}</span>
