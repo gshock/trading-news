@@ -40,7 +40,7 @@ export class EmailService {
     const attachments = snapshotData.entries.map((entry) => ({
       filename: entry.fileName,
       path: this.blobStorageService.getBlobUrl(entry.path),
-      cid: `chart-${entry.symbol.toLowerCase()}`,
+      cid: `chart-${entry.symbol.toLowerCase().replace(/[^a-z0-9_.-]/g, "_")}`,
     }));
 
     const mailOptions = {
