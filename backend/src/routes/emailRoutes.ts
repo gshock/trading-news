@@ -22,6 +22,16 @@ function initializeServices() {
 // POST /send-mail
 router.post("/send-mail", (req, res) => {
   const controller = initializeServices();
+
+  // Support reading folder timestamp `f` from the request body (preferred)
+  // while still honoring the query parameter for backward compatibility.
+  const bodyF = (req.body as any)?.f;
+  const queryF = (req.query as any)?.f;
+  const folderTimestamp = bodyF ?? queryF;
+
+  if (folderTimestamp !== undefined && folderTimestamp !== null) {
+    (req.query as any).f = folderTimestamp;
+  }
   return controller.sendMail(req, res);
 });
 
