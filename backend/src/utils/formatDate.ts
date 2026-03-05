@@ -26,15 +26,3 @@ export function formatSentAt(date: Date = new Date()): string {
     minute: "2-digit",
   });
 }
-
-// export function formatSubjectTimestamp(folderTimestamp: string): string {
-//   const parsed = new Date(folderTimestamp);
-//   if (!isNaN(parsed.getTime())) {
-//     return parsed.toLocaleDateString("en-US", {
-//       month: "short",
-//       day: "numeric",
-//       year: "numeric",
-//     });
-//   }
-//   return folderTimestamp;
-// }
