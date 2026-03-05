@@ -68,14 +68,11 @@ function App() {
           {/* Card */}
           <div className="bg-[#0c1420] border border-white/[0.07] rounded-lg overflow-hidden">
             {/* Tabs */}
-            <div className="flex border-b border-white/[0.07]" role="tablist">
+            <div className="flex border-b border-white/[0.07]">
               {TABS.map((t) => (
                 <button
                   key={t.id}
                   type="button"
-                  role="tab"
-                  aria-selected={tab === t.id}
-                  tabIndex={tab === t.id ? 0 : -1}
                   onClick={() => setTab(t.id)}
                   className={`flex-1 py-3 text-[11px] font-semibold tracking-wide transition-colors cursor-pointer ${
                     tab === t.id
