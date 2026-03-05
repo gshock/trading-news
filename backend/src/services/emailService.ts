@@ -1,8 +1,17 @@
 import nodemailer from "nodemailer";
+import { extname } from "node:path";
 import type { SnapshotIndex } from "../types/snapshot.js";
 import { BlobStorageService } from "./blobStorageService.js";
 import { TradingUpdateTemplate } from "../templates/tradingUpdate.template.js";
 import { formatLongDate } from "../utils/formatDate.js";
+
+const MIME_TYPES: Record<string, string> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+};
 
 export class EmailService {
   private transporter;
@@ -37,11 +46,16 @@ export class EmailService {
   ): Promise<void> {
     const html = this.tradingUpdateTemplate.render(snapshotData);
 
-    const attachments = snapshotData.entries.map((entry) => ({
-      filename: entry.fileName,
-      path: this.blobStorageService.getBlobUrl(entry.path),
-      cid: `chart-${entry.symbol.toLowerCase()}`,
-    }));
+    const attachments = snapshotData.entries.map((entry) => {
+      const ext = extname(entry.fileName).toLowerCase();
+      const contentType = MIME_TYPES[ext] ?? "application/octet-stream";
+      return {
+        filename: entry.fileName,
+        path: this.blobStorageService.getBlobUrl(entry.path),
+        cid: `chart-${entry.symbol.toLowerCase()}`,
+        contentType,
+      };
+    });
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
