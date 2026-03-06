@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import cors from "cors";
 import express from "express";
 import emailRoutes from "./routes/emailRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
@@ -13,6 +14,9 @@ const port = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Allow cors from all origins for now
+app.use(cors());
 
 // Routes
 app.get("/", (req, res) => {
