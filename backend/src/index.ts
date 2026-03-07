@@ -15,9 +15,36 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Allow cors from all origins for now
-app.use(cors());
+// Configure CORS: use allowlist from env if provided, otherwise allow all (current behavior)
+const allowedOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter((origin) => origin.length > 0);
 
+const corsOptions = {
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void
+  ) => {
+    // Always allow non-browser or same-origin requests without an Origin header
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // If no allowlist is configured, preserve existing behavior (allow all origins)
+    if (allowedOrigins.length === 0) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
+};
+
+app.use(cors(corsOptions));
 // Routes
 app.get("/", (req, res) => {
   res.send("Trading News Backend is running!");
