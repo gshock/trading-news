@@ -29,6 +29,15 @@ export function useGetSubscription(email: string) {
     queryKey: ["subscription", email],
     queryFn: () => subscriptionApi.getSubscription(email),
     enabled: false,
+    retry: (failureCount, error) => {
+      if (error instanceof AxiosError) {
+        const status = error.response?.status;
+        if (status && status >= 400 && status < 500) {
+          return false;
+        }
+      }
+      return failureCount < 3;
+    },
   });
 }
 
