@@ -7,6 +7,7 @@ import {
   useGetSubscription,
   useUnsubscribe,
 } from "./hooks/useSubscription";
+import { useConfirmRedirect } from "./hooks/useConfirmRedirect";
 import { isValidEmail } from "./utils/validateEmail";
 
 const TABS: Tab[] = [
@@ -27,7 +28,8 @@ const TOPICS: Topic[] = [
 ];
 
 function App() {
-  const [tab, setTab] = useState<TabItem>("subscribe");
+  const initialTab = useConfirmRedirect();
+  const [tab, setTab] = useState<TabItem>(initialTab);
   const [email, setEmail] = useState("");
   const [topics, setTopics] = useState<TopicId[]>([]);
 
@@ -193,7 +195,15 @@ function App() {
                 </div>
               )}
 
-              {tab === "subscribe" && (
+              {tab === "subscribe" && subscribeMutation.isSuccess && (
+                <div className="mt-4 p-3 rounded bg-blue-600/10 border border-blue-500/30">
+                  <p className="text-xs text-blue-300 text-center">
+                    Check your email and click the confirmation link to activate your subscription.
+                  </p>
+                </div>
+              )}
+
+              {tab === "subscribe" && !subscribeMutation.isSuccess && (
                 <p className="mt-4 text-[11px] text-slate-700 text-center">
                   No spam. Unsubscribe any time.
                 </p>

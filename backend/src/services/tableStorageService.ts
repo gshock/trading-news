@@ -151,6 +151,23 @@ export class TableStorageService {
   }
 
   /**
+   * Find a subscription by its confirmation token
+   */
+  async getSubscriptionByToken(
+    token: string,
+  ): Promise<SubscriptionEntity | null> {
+    const entities = this.tableClient.listEntities<SubscriptionEntity>({
+      queryOptions: { filter: `confirmToken eq '${token}'` },
+    });
+
+    for await (const entity of entities) {
+      return entity as SubscriptionEntity;
+    }
+
+    return null;
+  }
+
+  /**
    * Delete a subscription
    */
   async deleteSubscription(email: string): Promise<void> {
