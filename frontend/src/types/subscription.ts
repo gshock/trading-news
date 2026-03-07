@@ -2,8 +2,8 @@ export type SubscriptionStatus = "pending" | "active" | "unsubscribed";
 
 export interface SubscribeRequest {
   email: string;
-  topics: string;
-  source: string;
+  topics?: string;
+  source?: string;
 }
 
 export interface UpdateStatusRequest {
