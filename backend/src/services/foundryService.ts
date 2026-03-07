@@ -4,8 +4,8 @@ import { AzureKeyCredential } from "@azure/core-auth";
 import type { ForexEvent, FearGreedData, EarningsEvent, SpyChartData, AgentResult } from "../agents/types.js";
 
 export class FoundryService {
-  private client;
-  private deploymentName: string;
+  private client: ReturnType<typeof ModelClient> | null = null;
+  private deploymentName: string = "";
 
   constructor() {
     const endpoint = process.env.FOUNDRY_PROJECT_ENDPOINT;
@@ -13,9 +13,11 @@ export class FoundryService {
     const apiKey = process.env.FOUNDRY_API_KEY;
 
     if (!endpoint || !deployment) {
-      throw new Error(
-        "FoundryService configuration error: FOUNDRY_PROJECT_ENDPOINT and FOUNDRY_MODEL_DEPLOYMENT_NAME must be set.",
+      console.warn(
+        "[FoundryService] FOUNDRY_PROJECT_ENDPOINT and FOUNDRY_MODEL_DEPLOYMENT_NAME are not set. " +
+        "AI analysis will be replaced with a placeholder.",
       );
+      return;
     }
 
     this.deploymentName = deployment;
@@ -55,6 +57,13 @@ export class FoundryService {
     earningsResult: AgentResult<EarningsEvent[]>,
     spyChartResult: AgentResult<SpyChartData>,
   ): Promise<string> {
+    if (!this.client) {
+      return (
+        "**AI Analysis Unavailable** — Azure AI Foundry keys are not configured in this environment. " +
+        "Set `FOUNDRY_PROJECT_ENDPOINT` and `FOUNDRY_MODEL_DEPLOYMENT_NAME` in your `.env` file to enable AI-generated analysis."
+      );
+    }
+
     const today = new Date().toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
