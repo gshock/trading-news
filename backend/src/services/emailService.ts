@@ -87,12 +87,23 @@ export class EmailService {
     const html = this.preMarketBriefingTemplate.render(briefing);
     const date = formatLongDate(briefing.generatedAt);
 
+    const attachments: { filename: string; content: Buffer; cid: string; contentType: string }[] = [];
+    if (briefing.spyChartImage) {
+      attachments.push({
+        filename: "spy-chart.png",
+        content: briefing.spyChartImage,
+        cid: "spy-chart",
+        contentType: "image/png",
+      });
+    }
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_USER,
       bcc: recipients,
       subject: `Pre-Market Briefing — ${date}`,
       html,
+      attachments,
     };
 
     try {

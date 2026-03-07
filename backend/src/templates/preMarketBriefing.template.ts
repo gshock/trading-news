@@ -3,6 +3,7 @@ import type {
   ForexEvent,
   FearGreedData,
   EarningsEvent,
+  SpyChartData,
   AgentResult,
 } from "../agents/types.js";
 import { formatLongDate, formatSentAt } from "../utils/formatDate.js";
@@ -13,6 +14,7 @@ export class PreMarketBriefingTemplate {
     const sentAt = formatSentAt();
 
     const fearGreedSection = this.buildFearGreedSection(briefing.fearGreed);
+    const spyChartSection = this.buildSpyChartSection(briefing.spyChart, briefing.spyChartImage);
     const forexSection = this.buildForexSection(briefing.forexEvents);
     const earningsSection = this.buildEarningsSection(briefing.earnings);
     const analysisSection = this.buildAnalysisSection(briefing.analysis);
@@ -53,6 +55,7 @@ export class PreMarketBriefingTemplate {
             <td style="padding:28px 32px;">
 
               ${fearGreedSection}
+              ${spyChartSection}
               ${forexSection}
               ${earningsSection}
               ${analysisSection}
@@ -136,6 +139,52 @@ export class PreMarketBriefingTemplate {
           <table width="100%" cellpadding="0" cellspacing="0" border="0"
             style="border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">
             ${histRows}
+          </table>
+        </td>
+      </tr>
+    </table>`;
+  }
+
+  private buildSpyChartSection(result: AgentResult<SpyChartData>, chartImage: Buffer | null): string {
+    const title = this.sectionTitle("SPY Weekly — Price vs 20 SMA");
+
+    if (!result.success || !result.data) {
+      return title + this.stateRow(result.error ?? "SPY chart data unavailable.", "error");
+    }
+
+    const d = result.data;
+    const posColor = d.position === "above" ? "#16a34a" : d.position === "below" ? "#dc2626" : "#ca8a04";
+    const posLabel = d.position === "above" ? "ABOVE" : d.position === "below" ? "BELOW" : "AT";
+    const arrow = d.position === "above" ? "&#9650;" : d.position === "below" ? "&#9660;" : "&#9679;";
+
+    const chartRow = chartImage
+      ? `<tr>
+          <td style="padding:0 0 12px;">
+            <img src="cid:spy-chart" alt="SPY Weekly vs 20 SMA" width="700" style="max-width:100%;height:auto;border-radius:6px;border:1px solid #e2e8f0;" />
+          </td>
+        </tr>`
+      : "";
+
+    return `
+    ${title}
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+      ${chartRow}
+      <tr>
+        <td>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0"
+            style="border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">
+            <tr style="background-color:#f8fafc;">
+              <td style="padding:10px 14px;font-size:12px;color:#64748b;">Latest Close</td>
+              <td style="padding:10px 14px;font-size:12px;font-weight:700;color:#1e293b;text-align:right;">$${d.latestClose.toFixed(2)}</td>
+              <td style="padding:10px 14px;font-size:12px;color:#64748b;">20-Week SMA</td>
+              <td style="padding:10px 14px;font-size:12px;font-weight:700;color:#1e293b;text-align:right;">$${d.latestSma.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td colspan="2" style="padding:10px 14px;font-size:12px;color:#64748b;">Price vs SMA</td>
+              <td colspan="2" style="padding:10px 14px;font-size:13px;font-weight:700;color:${posColor};text-align:right;">
+                ${arrow} ${posLabel} by $${Math.abs(d.priceVsSma).toFixed(2)} (${d.priceVsSmaPct > 0 ? "+" : ""}${d.priceVsSmaPct.toFixed(2)}%)
+              </td>
+            </tr>
           </table>
         </td>
       </tr>

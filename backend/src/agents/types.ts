@@ -28,6 +28,29 @@ export interface EarningsEvent {
   marketCap: string;
 }
 
+export interface CandleData {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface SpyChartData {
+  symbol: string;
+  timeframe: string;
+  smaLength: number;
+  candles: CandleData[];
+  sma: (number | null)[];
+  latestClose: number;
+  latestSma: number;
+  priceVsSma: number;
+  priceVsSmaPct: number;
+  position: "above" | "below" | "at";
+  collectedAt: string;
+}
+
 export interface AgentResult<T> {
   agentName: string;
   success: boolean;
@@ -40,6 +63,8 @@ export interface PreMarketBriefing {
   forexEvents: AgentResult<ForexEvent[]>;
   fearGreed: AgentResult<FearGreedData>;
   earnings: AgentResult<EarningsEvent[]>;
+  spyChart: AgentResult<SpyChartData>;
+  spyChartImage: Buffer | null;
   analysis: string | null;
   generatedAt: string;
 }

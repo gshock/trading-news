@@ -1,7 +1,7 @@
 import ModelClient, { isUnexpected } from "@azure-rest/ai-inference";
 import { DefaultAzureCredential } from "@azure/identity";
 import { AzureKeyCredential } from "@azure/core-auth";
-import type { ForexEvent, FearGreedData, EarningsEvent, AgentResult } from "../agents/types.js";
+import type { ForexEvent, FearGreedData, EarningsEvent, SpyChartData, AgentResult } from "../agents/types.js";
 
 export class FoundryService {
   private client;
@@ -53,6 +53,7 @@ export class FoundryService {
     forexResult: AgentResult<ForexEvent[]>,
     fearGreedResult: AgentResult<FearGreedData>,
     earningsResult: AgentResult<EarningsEvent[]>,
+    spyChartResult: AgentResult<SpyChartData>,
   ): Promise<string> {
     const today = new Date().toLocaleDateString("en-US", {
       weekday: "long",
@@ -65,6 +66,7 @@ export class FoundryService {
     const forexSection = this.formatForexData(forexResult);
     const fearGreedSection = this.formatFearGreedData(fearGreedResult);
     const earningsSection = this.formatEarningsData(earningsResult);
+    const spyChartSection = this.formatSpyChartData(spyChartResult);
 
     const systemPrompt = `You are an expert financial market analyst preparing a concise pre-market briefing for active traders. 
 Your analysis should be actionable, data-driven, and focused on how today's events may impact US equity and forex markets.
@@ -73,6 +75,9 @@ Be direct and use bullet points for key takeaways. Include risk assessment.`;
     const userPrompt = `Today is ${today}. The US stock market opens at 9:30 AM EST.
 
 Here is the pre-market data collected this morning:
+
+## SPY Weekly Chart — Price vs 20 SMA
+${spyChartSection}
 
 ## High-Impact USD Economic Events (from Forex Factory)
 ${forexSection}
@@ -84,11 +89,12 @@ ${fearGreedSection}
 ${earningsSection}
 
 Please provide:
-1. **Market Sentiment Summary** — Overall mood based on Fear & Greed + scheduled events
-2. **Key Events to Watch** — Which events could move markets the most and expected impact
-3. **Earnings to Watch** — Highlight the most market-moving earnings reports (BMO reports especially), expected volatility, and sector implications
-4. **Trading Considerations** — Specific sectors/instruments likely affected, suggested caution levels
-5. **Risk Assessment** — Rate today's risk level (Low / Moderate / High / Extreme) with reasoning`;
+1. **Market Structure** — Where is SPY relative to the 20-week SMA? Is the broader market trend bullish, bearish, or transitioning?
+2. **Market Sentiment Summary** — Overall mood based on Fear & Greed + scheduled events
+3. **Key Events to Watch** — Which events could move markets the most and expected impact
+4. **Earnings to Watch** — Highlight the most market-moving earnings reports (BMO reports especially), expected volatility, and sector implications
+5. **Trading Considerations** — Specific sectors/instruments likely affected, suggested caution levels
+6. **Risk Assessment** — Rate today's risk level (Low / Moderate / High / Extreme) with reasoning`;
 
     const response = await this.client.path("/chat/completions").post({
       body: {
@@ -165,5 +171,22 @@ Please provide:
         return `- ${parts.join(" | ")}`;
       })
       .join("\n");
+  }
+
+  private formatSpyChartData(result: AgentResult<SpyChartData>): string {
+    if (!result.success || !result.data) {
+      return result.error
+        ? `Data collection failed: ${result.error}`
+        : "SPY chart data unavailable.";
+    }
+
+    const d = result.data;
+    const direction = d.priceVsSma > 0 ? "above" : d.priceVsSma < 0 ? "below" : "at";
+    return [
+      `- **SPY Latest Close**: $${d.latestClose.toFixed(2)}`,
+      `- **20-Week SMA**: $${d.latestSma.toFixed(2)}`,
+      `- **Position**: Price is **${direction}** the 20 SMA by $${Math.abs(d.priceVsSma).toFixed(2)} (${d.priceVsSmaPct > 0 ? "+" : ""}${d.priceVsSmaPct.toFixed(2)}%)`,
+      `- **Interpretation**: SPY trading ${direction} the 20-week SMA is generally considered ${direction === "above" ? "bullish — the broader market trend is intact" : direction === "below" ? "bearish — the broader market is under pressure" : "neutral — the market is at a key inflection point"}`,
+    ].join("\n");
   }
 }
