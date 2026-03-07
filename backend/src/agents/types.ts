@@ -18,6 +18,16 @@ export interface FearGreedData {
   timestamp: string;
 }
 
+export interface EarningsEvent {
+  ticker: string;
+  company: string;
+  reportTime: "BMO" | "AMC" | "During Market" | "Unknown";
+  expectedMove: string;
+  impliedMove: string;
+  historicalMove: string;
+  marketCap: string;
+}
+
 export interface AgentResult<T> {
   agentName: string;
   success: boolean;
@@ -29,6 +39,7 @@ export interface AgentResult<T> {
 export interface PreMarketBriefing {
   forexEvents: AgentResult<ForexEvent[]>;
   fearGreed: AgentResult<FearGreedData>;
+  earnings: AgentResult<EarningsEvent[]>;
   analysis: string | null;
   generatedAt: string;
 }

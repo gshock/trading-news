@@ -1,8 +1,10 @@
 import nodemailer from "nodemailer";
 import { extname } from "node:path";
 import type { SnapshotIndex } from "../types/snapshot.js";
+import type { PreMarketBriefing } from "../agents/types.js";
 import { BlobStorageService } from "./blobStorageService.js";
 import { TradingUpdateTemplate } from "../templates/tradingUpdate.template.js";
+import { PreMarketBriefingTemplate } from "../templates/preMarketBriefing.template.js";
 import { formatLongDate } from "../utils/formatDate.js";
 
 const MIME_TYPES: Record<string, string> = {
@@ -17,6 +19,7 @@ export class EmailService {
   private transporter;
   private blobStorageService: BlobStorageService;
   private tradingUpdateTemplate: TradingUpdateTemplate;
+  private preMarketBriefingTemplate: PreMarketBriefingTemplate;
 
   constructor() {
     const emailUser = process.env.EMAIL_USER;
@@ -38,6 +41,7 @@ export class EmailService {
     });
     this.blobStorageService = new BlobStorageService();
     this.tradingUpdateTemplate = new TradingUpdateTemplate();
+    this.preMarketBriefingTemplate = new PreMarketBriefingTemplate();
   }
 
   async sendTradingUpdate(
@@ -72,6 +76,32 @@ export class EmailService {
     } catch (error) {
       throw new Error(
         `Failed to send email: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
+  }
+
+  async sendPreMarketBriefing(
+    briefing: PreMarketBriefing,
+    recipients: string[],
+  ): Promise<void> {
+    const html = this.preMarketBriefingTemplate.render(briefing);
+    const date = formatLongDate(briefing.generatedAt);
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER,
+      bcc: recipients,
+      subject: `Pre-Market Briefing — ${date}`,
+      html,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+    } catch (error) {
+      throw new Error(
+        `Failed to send pre-market briefing email: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
       );
     }
   }
