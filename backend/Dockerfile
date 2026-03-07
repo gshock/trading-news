@@ -1,5 +1,29 @@
-# Use Node.js 20 LTS version
-FROM node:20-alpine
+# node:20-slim is Debian Bookworm — officially supported by Playwright.
+# Alpine is NOT supported by Playwright (no apt-get, fallback fails).
+FROM node:20-slim
+
+# Suppress debconf warnings during apt-get
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system libraries required by:
+#   - canvas (Cairo/Pango) for chartjs-node-canvas chart rendering
+#   - Playwright (Chromium) for web scraping
+#   apt-utils is listed first to suppress debconf frontend warnings
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    apt-utils \
+    pkg-config \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    libpixman-1-dev \
+    fontconfig \
+    fonts-liberation \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /app
@@ -7,8 +31,11 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Update npm to latest, then install app dependencies.
+# --loglevel=error suppresses deprecation notices from transitive deps
+# (e.g. prebuild-install@7 inside the canvas package) without hiding real errors.
+RUN npm install -g npm@latest
+RUN npm install --loglevel=error
 RUN npx playwright install --with-deps chromium
 
 # Copy application source
