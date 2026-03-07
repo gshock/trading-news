@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
 import type { TabItem, Tab, TopicId, Topic } from "./types/tabs";
 import { Checkbox } from "./components/checkbox";
@@ -46,7 +46,7 @@ function App() {
     unsubscribeMutation.isPending ||
     statusQuery.isFetching;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!email || !isValidEmail(email)) {
       toast.error("Please enter a valid email address");
