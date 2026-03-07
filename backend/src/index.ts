@@ -13,6 +13,9 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Trust the reverse proxy (Azure Container Apps) so express-rate-limit reads the real client IP
+app.set("trust proxy", 1);
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
