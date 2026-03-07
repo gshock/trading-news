@@ -1,6 +1,11 @@
 import { useState } from "react";
 import type { TabItem, Tab, TopicId, Topic } from "./types/tabs";
 import { Checkbox } from "./components/checkbox";
+import {
+  useSubscribe,
+  useGetSubscription,
+  useUnsubscribe,
+} from "./hooks/useSubscription";
 
 const TABS: Tab[] = [
   { id: "subscribe", label: "Subscribe" },
@@ -24,10 +29,42 @@ function App() {
   const [email, setEmail] = useState("");
   const [topics, setTopics] = useState<TopicId[]>([]);
 
+  const subscribeMutation = useSubscribe();
+  const unsubscribeMutation = useUnsubscribe();
+  const statusQuery = useGetSubscription(email);
+
   const toggleTopic = (id: TopicId) => {
     setTopics((prev) =>
-      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id],
     );
+  };
+
+  const isLoading =
+    subscribeMutation.isPending ||
+    unsubscribeMutation.isPending ||
+    statusQuery.isFetching;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    if (tab === "subscribe") {
+      subscribeMutation.mutate(
+        { email, topics: topics.join(", "), source: "web" },
+        {
+          onSuccess: () => {
+            setEmail("");
+            setTopics([]);
+          },
+        },
+      );
+    } else if (tab === "status") {
+      statusQuery.refetch();
+    } else if (tab === "unsubscribe") {
+      unsubscribeMutation.mutate(email, {
+        onSuccess: () => setEmail(""),
+      });
+    }
   };
 
   return (
@@ -86,7 +123,7 @@ function App() {
             </div>
 
             {/* Form */}
-            <form className="p-6">
+            <form className="p-6" onSubmit={handleSubmit}>
               <label className="block text-[10px] font-bold text-slate-500 tracking-[0.15em] uppercase mb-2">
                 Email address
               </label>
@@ -119,14 +156,38 @@ function App() {
 
               <button
                 type="submit"
-                className={`w-full py-3 rounded text-sm font-semibold tracking-wide transition-colors cursor-pointer ${
+                disabled={isLoading}
+                className={`w-full py-3 rounded text-sm font-semibold tracking-wide transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                   tab === "unsubscribe"
                     ? "bg-transparent border border-red-500/30 text-red-400 hover:bg-red-500/10"
                     : "bg-blue-600 hover:bg-blue-500 text-white"
                 }`}
               >
-                {CTA_LABEL[tab]}
+                {isLoading ? "Loading..." : CTA_LABEL[tab]}
               </button>
+
+              {tab === "status" && statusQuery.data && (
+                <div className="mt-4 p-3 rounded bg-[#080d14] border border-white/8">
+                  <p className="text-xs text-slate-400">
+                    Status:{" "}
+                    <span className="text-white font-semibold">
+                      {statusQuery.data.status}
+                    </span>
+                  </p>
+                  {statusQuery.data.topics && (
+                    <p className="text-xs text-slate-400 mt-1">
+                      Topics:{" "}
+                      <span className="text-white">
+                        {statusQuery.data.topics}
+                      </span>
+                    </p>
+                  )}
+                  <p className="text-xs text-slate-500 mt-1">
+                    Since{" "}
+                    {new Date(statusQuery.data.createdUtc).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
 
               {tab === "subscribe" && (
                 <p className="mt-4 text-[11px] text-slate-700 text-center">
