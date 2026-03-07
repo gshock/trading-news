@@ -22,7 +22,7 @@ export class SchedulerService {
     }
 
     this.task = cron.schedule(
-      "0 9 * * 1-5",
+      "0 5 * * 1-5",
       async () => {
         console.log(`[Scheduler] Triggered at ${new Date().toISOString()}`);
         try {
