@@ -11,17 +11,22 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@azure/core-auth": "^1.9.0",
     "@azure/data-tables": "^13.3.2",
     "@azure/identity": "^4.13.0",
+    "@azure-rest/ai-inference": "^1.0.0-beta.6",
     "axios": "^1.13.5",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
-    "nodemailer": "^8.0.1"
+    "node-cron": "^4.0.7",
+    "nodemailer": "^8.0.1",
+    "playwright": "^1.52.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^25.3.0",
+    "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^7.0.11",
     "eslint": "^10.0.2",
     "nodemon": "^3.1.14",

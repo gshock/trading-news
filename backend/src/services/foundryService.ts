@@ -1,0 +1,118 @@
+import ModelClient, { isUnexpected } from "@azure-rest/ai-inference";
+import { DefaultAzureCredential } from "@azure/identity";
+import { AzureKeyCredential } from "@azure/core-auth";
+import type { ForexEvent, FearGreedData, AgentResult } from "../agents/types.js";
+
+export class FoundryService {
+  private client;
+  private deploymentName: string;
+
+  constructor() {
+    const endpoint = process.env.FOUNDRY_PROJECT_ENDPOINT;
+    const deployment = process.env.FOUNDRY_MODEL_DEPLOYMENT_NAME;
+    const apiKey = process.env.FOUNDRY_API_KEY;
+
+    if (!endpoint || !deployment) {
+      throw new Error(
+        "FoundryService configuration error: FOUNDRY_PROJECT_ENDPOINT and FOUNDRY_MODEL_DEPLOYMENT_NAME must be set.",
+      );
+    }
+
+    this.deploymentName = deployment;
+
+    // Prefer an explicit API key (FOUNDRY_API_KEY) stored in .env.
+    // Fall back to DefaultAzureCredential (requires `az login` locally
+    // or a Managed Identity / Service Principal in production).
+    const credential = apiKey
+      ? new AzureKeyCredential(apiKey)
+      : new DefaultAzureCredential();
+
+    this.client = ModelClient(endpoint, credential);
+  }
+
+  async analyzePreMarketData(
+    forexResult: AgentResult<ForexEvent[]>,
+    fearGreedResult: AgentResult<FearGreedData>,
+  ): Promise<string> {
+    const today = new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "America/New_York",
+    });
+
+    const forexSection = this.formatForexData(forexResult);
+    const fearGreedSection = this.formatFearGreedData(fearGreedResult);
+
+    const systemPrompt = `You are an expert financial market analyst preparing a concise pre-market briefing for active traders. 
+Your analysis should be actionable, data-driven, and focused on how today's events may impact US equity and forex markets.
+Be direct and use bullet points for key takeaways. Include risk assessment.`;
+
+    const userPrompt = `Today is ${today}. The US stock market opens at 9:30 AM EST.
+
+Here is the pre-market data collected this morning:
+
+## High-Impact USD Economic Events (from Forex Factory)
+${forexSection}
+
+## CNN Fear & Greed Index
+${fearGreedSection}
+
+Please provide:
+1. **Market Sentiment Summary** — Overall mood based on Fear & Greed + scheduled events
+2. **Key Events to Watch** — Which events could move markets the most and expected impact
+3. **Trading Considerations** — Specific sectors/instruments likely affected, suggested caution levels
+4. **Risk Assessment** — Rate today's risk level (Low / Moderate / High / Extreme) with reasoning`;
+
+    const response = await this.client.path("/chat/completions").post({
+      body: {
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        model: this.deploymentName,
+        temperature: 0.3,
+        max_tokens: 1500,
+      },
+    });
+
+    if (isUnexpected(response)) {
+      throw new Error(`Foundry API error: ${response.status} — ${JSON.stringify(response.body)}`);
+    }
+
+    return response.body.choices[0]?.message?.content ?? "No analysis generated.";
+  }
+
+  private formatForexData(result: AgentResult<ForexEvent[]>): string {
+    if (!result.success || !result.data?.length) {
+      return result.error
+        ? `Data collection failed: ${result.error}`
+        : "No high-impact USD events scheduled for today.";
+    }
+
+    return result.data
+      .map(
+        (e) =>
+          `- **${e.time}** | ${e.event} | Forecast: ${e.forecast || "N/A"} | Previous: ${e.previous || "N/A"}${e.actual ? ` | Actual: ${e.actual}` : ""}`,
+      )
+      .join("\n");
+  }
+
+  private formatFearGreedData(result: AgentResult<FearGreedData>): string {
+    if (!result.success || !result.data) {
+      return result.error
+        ? `Data collection failed: ${result.error}`
+        : "Fear & Greed data unavailable.";
+    }
+
+    const d = result.data;
+    return [
+      `- **Current Score**: ${d.score} (${d.label})`,
+      `- Previous Close: ${d.previousClose.score} (${d.previousClose.label})`,
+      `- 1 Week Ago: ${d.oneWeekAgo.score} (${d.oneWeekAgo.label})`,
+      `- 1 Month Ago: ${d.oneMonthAgo.score} (${d.oneMonthAgo.label})`,
+      `- 1 Year Ago: ${d.oneYearAgo.score} (${d.oneYearAgo.label})`,
+    ].join("\n");
+  }
+}
