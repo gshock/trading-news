@@ -124,8 +124,8 @@ export class EmailService {
     email: string,
     confirmToken: string,
   ): Promise<void> {
-    const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const confirmUrl = `${baseUrl}?confirm=${confirmToken}`;
+    const apiUrl = process.env.API_URL || "http://localhost:3000/api/v1";
+    const confirmUrl = `${apiUrl}/subscription/confirm?token=${confirmToken}`;
     const html = this.confirmSubscriptionTemplate.render(email, confirmUrl);
 
     const mailOptions = {

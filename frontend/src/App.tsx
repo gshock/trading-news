@@ -6,6 +6,7 @@ import {
   useSubscribe,
   useGetSubscription,
   useUnsubscribe,
+  getErrorMessage,
 } from "./hooks/useSubscription";
 import { useConfirmRedirect } from "./hooks/useConfirmRedirect";
 import { isValidEmail } from "./utils/validateEmail";
@@ -32,6 +33,7 @@ function App() {
   const [tab, setTab] = useState<TabItem>(initialTab);
   const [email, setEmail] = useState("");
   const [topics, setTopics] = useState<TopicId[]>([]);
+  const [statusSubmitted, setStatusSubmitted] = useState(false);
 
   const subscribeMutation = useSubscribe();
   const unsubscribeMutation = useUnsubscribe();
@@ -55,6 +57,11 @@ function App() {
       return;
     }
 
+    if (tab === "subscribe" && topics.length === 0) {
+      toast.error("Please select at least one session (9:45 AM or 10:00 AM)");
+      return;
+    }
+
     if (tab === "subscribe") {
       subscribeMutation.mutate(
         { email, topics: topics.join(", "), source: "web" },
@@ -66,6 +73,7 @@ function App() {
         },
       );
     } else if (tab === "status") {
+      setStatusSubmitted(true);
       statusQuery.refetch();
     } else if (tab === "unsubscribe") {
       unsubscribeMutation.mutate(email, {
@@ -117,7 +125,7 @@ function App() {
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => setTab(t.id)}
+                  onClick={() => { setTab(t.id); setEmail(""); setStatusSubmitted(false); }}
                   className={`flex-1 py-3 text-[11px] font-semibold tracking-wide transition-colors cursor-pointer ${
                     tab === t.id
                       ? "text-white border-b-2 border-blue-500 bg-blue-600/5"
@@ -137,7 +145,7 @@ function App() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setStatusSubmitted(false); }}
                 placeholder="you@example.com"
                 className="w-full bg-[#080d14] border border-white/9 rounded px-4 py-3 text-sm text-white placeholder-slate-700 outline-none focus:border-blue-600/60 transition-colors mb-4"
               />
@@ -172,7 +180,15 @@ function App() {
                 {isLoading ? "Loading..." : CTA_LABEL[tab]}
               </button>
 
-              {tab === "status" && statusQuery.data && (
+              {tab === "status" && statusSubmitted && statusQuery.isError && (
+                <div className="mt-4 p-3 rounded bg-red-500/10 border border-red-500/30">
+                  <p className="text-xs text-red-400 text-center">
+                    {getErrorMessage(statusQuery.error)}
+                  </p>
+                </div>
+              )}
+
+              {tab === "status" && statusSubmitted && statusQuery.data && (
                 <div className="mt-4 p-3 rounded bg-[#080d14] border border-white/8">
                   <p className="text-xs text-slate-400">
                     Status:{" "}

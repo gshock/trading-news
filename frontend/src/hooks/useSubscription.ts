@@ -4,7 +4,7 @@ import { AxiosError } from "axios";
 import * as subscriptionApi from "../api/subscription";
 import type { SubscribeRequest, ApiError } from "../types/subscription";
 
-function getErrorMessage(error: unknown): string {
+export function getErrorMessage(error: unknown): string {
   if (error instanceof AxiosError) {
     const data = error.response?.data as ApiError | undefined;
     return data?.error ?? data?.message ?? error.message;

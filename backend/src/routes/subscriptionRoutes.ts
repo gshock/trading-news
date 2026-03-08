@@ -123,7 +123,9 @@ router.put("/subscription/:email/status", async (req, res) => {
       status === "active" ? new Date().toISOString() : undefined,
     );
 
-    res.json({ message: "Subscription updated", email, status });
+    const message =
+      status === "unsubscribed" ? "You have been unsubscribed" : "Subscription updated";
+    res.json({ message, email, status });
   } catch (error) {
     console.error("Update subscription error:", error);
     res.status(500).json({ error: "Failed to update subscription" });
