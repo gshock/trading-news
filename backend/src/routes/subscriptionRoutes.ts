@@ -16,29 +16,34 @@ router.post("/subscribe", async (req, res) => {
 
     const tableService = new TableStorageService();
 
-    // Check if already subscribed
     const existing = await tableService.getSubscription(email);
-    if (existing) {
+
+    // Active or pending subscriptions cannot be duplicated
+    if (existing && existing.status !== "unsubscribed") {
       return res
         .status(409)
         .json({ error: "Email already subscribed", status: existing.status });
     }
 
-    // Generate confirmation token
     const confirmToken = randomBytes(32).toString("hex");
 
-    // Add new subscription
-    const options: any = {
-      status: "pending" as const,
-      source: source || "api",
-      confirmToken,
-    };
-    if (topics) options.topics = topics;
-    if (req.ip) options.ip = req.ip;
-    const userAgent = req.get("user-agent");
-    if (userAgent) options.ua = userAgent;
+    if (existing && existing.status === "unsubscribed") {
+      // Re-subscribe: reset the existing entry back to pending with a new token
+      await tableService.resetSubscription(email, confirmToken, topics);
+    } else {
+      // New subscription
+      const options: any = {
+        status: "pending" as const,
+        source: source || "api",
+        confirmToken,
+      };
+      if (topics) options.topics = topics;
+      if (req.ip) options.ip = req.ip;
+      const userAgent = req.get("user-agent");
+      if (userAgent) options.ua = userAgent;
 
-    await tableService.addSubscription(email, options);
+      await tableService.addSubscription(email, options);
+    }
 
     // Send confirmation email
     const emailService = new EmailService();

@@ -108,6 +108,22 @@ export class TableStorageService {
     }
   }
 
+  async resetSubscription(
+    email: string,
+    confirmToken: string,
+    topics?: string,
+  ): Promise<void> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const entity: any = {
+      partitionKey: "recipients",
+      rowKey: normalizedEmail,
+      status: "pending",
+      confirmToken,
+    };
+    if (topics) entity.topics = topics;
+    await this.tableClient.updateEntity(entity, "Merge");
+  }
+
   /**
    * Update subscription status
    */
