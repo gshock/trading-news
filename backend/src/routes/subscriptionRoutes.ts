@@ -5,6 +5,16 @@ import { EmailService } from "../services/emailService.js";
 
 const router = express.Router();
 
+// Lazy initialization - reuse a single EmailService instance across requests
+let emailService: EmailService;
+
+function getEmailService(): EmailService {
+  if (!emailService) {
+    emailService = new EmailService();
+  }
+  return emailService;
+}
+
 // POST /subscribe - Add a new subscription
 router.post("/subscribe", async (req, res) => {
   try {
@@ -46,8 +56,7 @@ router.post("/subscribe", async (req, res) => {
     }
 
     // Send confirmation email
-    const emailService = new EmailService();
-    await emailService.sendConfirmationEmail(email, confirmToken);
+    await getEmailService().sendConfirmationEmail(email, confirmToken);
 
     res.status(201).json({ message: "Check your email to confirm your subscription", email });
   } catch (error) {
