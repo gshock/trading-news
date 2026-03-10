@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import { toast } from "react-toastify";
 import type { TabItem, Tab, TopicId, Topic } from "./types/tabs";
 import { Checkbox } from "./components/checkbox";
@@ -40,9 +40,23 @@ function App() {
   const statusQuery = useGetSubscription(email);
 
   const toggleTopic = (id: TopicId) => {
+    subscribeMutation.reset();
     setTopics((prev) =>
       prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id],
     );
+  };
+
+  const handleTabChange = (id: TabItem) => {
+    setTab(id);
+    setEmail("");
+    setStatusSubmitted(false);
+    subscribeMutation.reset();
+  };
+
+  const handleEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    setStatusSubmitted(false);
+    subscribeMutation.reset();
   };
 
   const isLoading =
@@ -125,7 +139,7 @@ function App() {
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => { setTab(t.id); setEmail(""); setStatusSubmitted(false); }}
+                  onClick={() => handleTabChange(t.id)}
                   className={`flex-1 py-3 text-[11px] font-semibold tracking-wide transition-colors cursor-pointer ${
                     tab === t.id
                       ? "text-white border-b-2 border-blue-500 bg-blue-600/5"
@@ -145,7 +159,7 @@ function App() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setStatusSubmitted(false); }}
+                onChange={handleEmailChange}
                 placeholder="you@example.com"
                 className="w-full bg-[#080d14] border border-white/9 rounded px-4 py-3 text-sm text-white placeholder-slate-700 outline-none focus:border-blue-600/60 transition-colors mb-4"
               />
