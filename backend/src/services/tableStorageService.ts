@@ -108,6 +108,31 @@ export class TableStorageService {
     }
   }
 
+  async resetSubscription(
+    email: string,
+    confirmToken: string,
+    topics?: string,
+  ): Promise<void> {
+    const normalizedEmail = email.toLowerCase().trim();
+    // Read the existing entity to preserve properties not being reset (ip, ua, source)
+    const existing = await this.getSubscription(normalizedEmail);
+    const entity: any = {
+      partitionKey: "recipients",
+      rowKey: normalizedEmail,
+      status: "pending",
+      createdUtc: new Date().toISOString(),
+      confirmToken,
+      // confirmedUtc is intentionally omitted so the Replace wipes it out
+    };
+    if (existing?.ip) entity.ip = existing.ip;
+    if (existing?.ua) entity.ua = existing.ua;
+    if (existing?.source) entity.source = existing.source;
+    const topicsValue = topics ?? existing?.topics;
+    if (topicsValue !== undefined) entity.topics = topicsValue;
+    // Use Replace mode to guarantee confirmedUtc (and any other stale field) is removed
+    await this.tableClient.updateEntity(entity, "Replace");
+  }
+
   /**
    * Update subscription status
    */
@@ -148,6 +173,25 @@ export class TableStorageService {
     }
 
     return results;
+  }
+
+  /**
+   * Find a subscription by its confirmation token
+   */
+  async getSubscriptionByToken(
+    token: string,
+  ): Promise<SubscriptionEntity | null> {
+    // Escape single quotes to keep the OData string literal well-formed
+    const safeToken = token.replace(/'/g, "''");
+    const entities = this.tableClient.listEntities<SubscriptionEntity>({
+      queryOptions: { filter: `confirmToken eq '${safeToken}'` },
+    });
+
+    for await (const entity of entities) {
+      return entity as SubscriptionEntity;
+    }
+
+    return null;
   }
 
   /**

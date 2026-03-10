@@ -5,6 +5,7 @@ import type { PreMarketBriefing } from "../agents/types.js";
 import { BlobStorageService } from "./blobStorageService.js";
 import { TradingUpdateTemplate } from "../templates/tradingUpdate.template.js";
 import { PreMarketBriefingTemplate } from "../templates/preMarketBriefing.template.js";
+import { ConfirmSubscriptionTemplate } from "../templates/confirmSubscription.template.js";
 import { formatLongDate } from "../utils/formatDate.js";
 
 const MIME_TYPES: Record<string, string> = {
@@ -20,6 +21,7 @@ export class EmailService {
   private blobStorageService: BlobStorageService;
   private tradingUpdateTemplate: TradingUpdateTemplate;
   private preMarketBriefingTemplate: PreMarketBriefingTemplate;
+  private confirmSubscriptionTemplate: ConfirmSubscriptionTemplate;
 
   constructor() {
     const emailUser = process.env.EMAIL_USER;
@@ -42,6 +44,7 @@ export class EmailService {
     this.blobStorageService = new BlobStorageService();
     this.tradingUpdateTemplate = new TradingUpdateTemplate();
     this.preMarketBriefingTemplate = new PreMarketBriefingTemplate();
+    this.confirmSubscriptionTemplate = new ConfirmSubscriptionTemplate();
   }
 
   async sendTradingUpdate(
@@ -113,6 +116,30 @@ export class EmailService {
         `Failed to send pre-market briefing email: ${
           error instanceof Error ? error.message : "Unknown error"
         }`,
+      );
+    }
+  }
+
+  async sendConfirmationEmail(
+    email: string,
+    confirmToken: string,
+  ): Promise<void> {
+    const apiUrl = process.env.API_URL || "http://localhost:3000/api/v1";
+    const confirmUrl = `${apiUrl}/subscription/confirm?token=${confirmToken}`;
+    const html = this.confirmSubscriptionTemplate.render(email, confirmUrl);
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Confirm your Market Snapshot subscription",
+      html,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+    } catch (error) {
+      throw new Error(
+        `Failed to send confirmation email: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }

@@ -1,12 +1,16 @@
 import type { Request, Response } from "express";
 import type { BlobStorageService } from "../services/blobStorageService.js";
 import type { EmailService } from "../services/emailService.js";
+import { TableStorageService } from "../services/tableStorageService.js";
 
 export class EmailController {
+  private tableStorageService: TableStorageService;
+
   constructor(
     private blobStorageService: BlobStorageService,
     private emailService: EmailService,
   ) {
+    this.tableStorageService = new TableStorageService();
     this.sendMail = this.sendMail.bind(this);
   }
 
@@ -29,7 +33,19 @@ export class EmailController {
       const snapshotData =
         await this.blobStorageService.getSnapshotIndex(folderTimestamp);
 
-      const recipients = ["gerardo@myresumator.com", "segundaviddev@gmail.com"];
+      // Get active subscribers from table storage
+      const subscribers = await this.tableStorageService.listSubscriptionsByStatus("active");
+      const recipients = subscribers.map((s) => s.rowKey);
+
+      if (recipients.length === 0) {
+        res.status(200).json({
+          message: "No active subscribers — email skipped",
+          folderTimestamp,
+          recipientCount: 0,
+          chartCount: snapshotData.count,
+        });
+        return;
+      }
 
       // Send email
       await this.emailService.sendTradingUpdate(
