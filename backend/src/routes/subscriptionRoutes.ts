@@ -59,13 +59,17 @@ router.post("/subscribe", async (req, res) => {
 // GET /subscription/confirm?token=... - Confirm subscription and redirect to frontend
 router.get("/subscription/confirm", async (req, res) => {
   try {
-    const token = req.query.token as string;
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const rawToken = req.query.token;
 
-    if (!token) {
+    const isValidToken =
+      typeof rawToken === "string" && /^[0-9a-f]{64}$/i.test(rawToken);
+
+    if (!isValidToken) {
       return res.redirect(`${frontendUrl}?confirmed=error`);
     }
 
+    const token = rawToken as string;
     const tableService = new TableStorageService();
     const subscription = await tableService.getSubscriptionByToken(token);
 
