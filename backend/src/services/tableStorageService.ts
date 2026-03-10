@@ -114,14 +114,23 @@ export class TableStorageService {
     topics?: string,
   ): Promise<void> {
     const normalizedEmail = email.toLowerCase().trim();
+    // Read the existing entity to preserve properties not being reset (ip, ua, source)
+    const existing = await this.getSubscription(normalizedEmail);
     const entity: any = {
       partitionKey: "recipients",
       rowKey: normalizedEmail,
       status: "pending",
+      createdUtc: new Date().toISOString(),
       confirmToken,
+      // confirmedUtc is intentionally omitted so the Replace wipes it out
     };
-    if (topics) entity.topics = topics;
-    await this.tableClient.updateEntity(entity, "Merge");
+    if (existing?.ip) entity.ip = existing.ip;
+    if (existing?.ua) entity.ua = existing.ua;
+    if (existing?.source) entity.source = existing.source;
+    const topicsValue = topics ?? existing?.topics;
+    if (topicsValue !== undefined) entity.topics = topicsValue;
+    // Use Replace mode to guarantee confirmedUtc (and any other stale field) is removed
+    await this.tableClient.updateEntity(entity, "Replace");
   }
 
   /**
