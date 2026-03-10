@@ -20,7 +20,6 @@ $ResourceGroup = "TraderRG"
 $BackendDir = $PSScriptRoot
 
 Write-Host "`n==> Verifying Azure CLI login..." -ForegroundColor Cyan
-$account = az account show 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Not logged in to Azure. Run 'az login' first."
 }

@@ -35,9 +35,7 @@ export class SchedulerService {
           console.error("[Scheduler] Failed:", error);
         }
       },
-      {
-        timezone: "America/New_York",
-      },
+      { timezone: "America/New_York" },
     );
 
     console.log("[Scheduler] Pre-market briefing scheduled for 5:30 AM EST, Mon-Fri");

@@ -26,7 +26,7 @@ export class AgentController {
   getSchedulerStatus(_req: Request, res: Response): void {
     res.status(200).json({
       status: "running",
-      schedule: "5:30 AM EST, Monday–Friday",
+      schedule: "5:30 AM EST, Monday-Friday",
       timezone: "America/New_York",
     });
   }

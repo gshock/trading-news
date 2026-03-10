@@ -16,6 +16,7 @@ RUN apt-get update && \
 # Install system libraries required by:
 #   - canvas (Cairo/Pango) for chartjs-node-canvas chart rendering
 #   - Playwright (Chromium) for web scraping
+#   - tzdata for node-cron timezone support (node:slim has no timezone data)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libcairo2-dev \
@@ -29,7 +30,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
+
+# Set timezone so node-cron can resolve America/New_York
+ENV TZ=America/New_York
 
 # Set the working directory
 WORKDIR /app
