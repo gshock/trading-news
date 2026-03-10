@@ -172,8 +172,10 @@ export class TableStorageService {
   async getSubscriptionByToken(
     token: string,
   ): Promise<SubscriptionEntity | null> {
+    // Escape single quotes to keep the OData string literal well-formed
+    const safeToken = token.replace(/'/g, "''");
     const entities = this.tableClient.listEntities<SubscriptionEntity>({
-      queryOptions: { filter: `confirmToken eq '${token}'` },
+      queryOptions: { filter: `confirmToken eq '${safeToken}'` },
     });
 
     for await (const entity of entities) {
