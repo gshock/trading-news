@@ -2,6 +2,7 @@ import express from "express";
 import { randomBytes } from "node:crypto";
 import { TableStorageService } from "../services/tableStorageService.js";
 import { EmailService } from "../services/emailService.js";
+import { apiKeyAuth } from "../middleware/apiKeyAuth.js";
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ function getEmailService(): EmailService {
 }
 
 // POST /subscribe - Add a new subscription
-router.post("/subscribe", async (req, res) => {
+router.post("/subscribe", apiKeyAuth, async (req, res) => {
   try {
     const { email, topics, source } = req.body;
 
@@ -105,9 +106,9 @@ router.get("/subscription/confirm", async (req, res) => {
 });
 
 // GET /subscription/:email - Get subscription status
-router.get("/subscription/:email", async (req, res) => {
+router.get("/subscription/:email", apiKeyAuth, async (req, res) => {
   try {
-    const { email } = req.params;
+    const email = req.params.email as string;
     const tableService = new TableStorageService();
 
     const subscription = await tableService.getSubscription(email);
@@ -124,9 +125,9 @@ router.get("/subscription/:email", async (req, res) => {
 });
 
 // PUT /subscription/:email/status - Update subscription status
-router.put("/subscription/:email/status", async (req, res) => {
+router.put("/subscription/:email/status", apiKeyAuth, async (req, res) => {
   try {
-    const { email } = req.params;
+    const email = req.params.email as string;
     const { status } = req.body;
 
     if (!["pending", "active", "unsubscribed"].includes(status)) {
@@ -151,7 +152,7 @@ router.put("/subscription/:email/status", async (req, res) => {
 });
 
 // GET /subscriptions - List subscriptions by status
-router.get("/subscriptions", async (req, res) => {
+router.get("/subscriptions", apiKeyAuth, async (req, res) => {
   try {
     const status = (req.query.status as string) || "active";
 
@@ -172,9 +173,9 @@ router.get("/subscriptions", async (req, res) => {
 });
 
 // DELETE /subscription/:email - Delete a subscription
-router.delete("/subscription/:email", async (req, res) => {
+router.delete("/subscription/:email", apiKeyAuth, async (req, res) => {
   try {
-    const { email } = req.params;
+    const email = req.params.email as string;
     const tableService = new TableStorageService();
 
     await tableService.deleteSubscription(email);
