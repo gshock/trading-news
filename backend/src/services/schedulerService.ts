@@ -10,9 +10,9 @@ export class SchedulerService {
   }
 
   /**
-   * Schedule the pre-market briefing to run at 9:00 AM EST every weekday.
+   * Schedule the pre-market briefing to run at 5:30 AM EST every weekday.
    * Cron expression: minute hour day month weekday
-   * "0 9 * * 1-5" = 9:00 AM, Monday through Friday
+   * "30 5 * * 1-5" = 5:30 AM, Monday through Friday
    * The timezone option ensures it runs in US Eastern time.
    */
   start(): void {
@@ -22,7 +22,7 @@ export class SchedulerService {
     }
 
     this.task = cron.schedule(
-      "0 5 * * 1-5",
+      "30 5 * * 1-5",
       async () => {
         console.log(`[Scheduler] Triggered at ${new Date().toISOString()}`);
         try {
@@ -40,7 +40,7 @@ export class SchedulerService {
       },
     );
 
-    console.log("[Scheduler] Pre-market briefing scheduled for 9:00 AM EST, Mon-Fri");
+    console.log("[Scheduler] Pre-market briefing scheduled for 5:30 AM EST, Mon-Fri");
   }
 
   stop(): void {

@@ -31,3 +31,8 @@ export async function deleteSubscription(email: string): Promise<DeleteSubscript
   );
   return res.data;
 }
+
+export async function confirmSubscription(token: string): Promise<{ message: string }> {
+  const res = await api.post<{ message: string }>("/subscription/confirm", { token });
+  return res.data;
+}

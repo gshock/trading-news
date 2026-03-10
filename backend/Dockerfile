@@ -5,12 +5,18 @@ FROM node:20-slim
 # Suppress debconf warnings during apt-get
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install apt-utils first in its own step so debconf is fully functional
+# before any subsequent packages run their post-install configuration.
+# stderr is suppressed here because the "delaying package configuration"
+# warning is expected and harmless during apt-utils' own installation.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends apt-utils 2>/dev/null && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install system libraries required by:
 #   - canvas (Cairo/Pango) for chartjs-node-canvas chart rendering
 #   - Playwright (Chromium) for web scraping
-#   apt-utils is listed first to suppress debconf frontend warnings
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    apt-utils \
     pkg-config \
     libcairo2-dev \
     libpango1.0-dev \

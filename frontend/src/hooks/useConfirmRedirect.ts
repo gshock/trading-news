@@ -1,44 +1,35 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import type { TabItem } from "../types/tabs";
 
-export function useConfirmRedirect(): TabItem {
-  const [initialTab, setInitialTab] = useState<TabItem>("subscribe");
-  const hasRunRef = useRef(false);
+function readTokenFromUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  const t = params.get("token");
+  return t && /^[0-9a-f]{64}$/i.test(t) ? t : null;
+}
+
+/**
+ * Reads ?token= from the URL on first render.
+ * Returns the confirmation token if present, or null.
+ * Also handles the legacy ?confirmed=error redirect from old backend GET links.
+ */
+export function useConfirmRedirect(): string | null {
+  // useState with an initializer function runs synchronously on first render,
+  // so the returned token is correct even before any effects fire.
+  const [pendingToken] = useState<string | null>(readTokenFromUrl);
 
   useEffect(() => {
-    if (hasRunRef.current) return;
-    hasRunRef.current = true;
-
-    if (typeof window === "undefined") {
-      return;
-    }
-
+    if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    const confirmed = params.get("confirmed");
-
-    if (!confirmed) {
-      return;
+    if (params.has("token") || params.has("confirmed")) {
+      window.history.replaceState({}, "", window.location.pathname);
     }
-
-    // Clean the URL immediately
-    window.history.replaceState({}, "", window.location.pathname);
-
-    if (confirmed === "success") {
-      toast.success("Subscription confirmed! You're all set.");
-      setInitialTab("status");
-      return;
+    // Legacy: ?confirmed=error arrives from the old GET /subscription/confirm redirect
+    // when an already-invalid token was in an old email.
+    if (params.get("confirmed") === "error") {
+      toast.error("Confirmation failed. The link may be invalid or expired.");
     }
-
-    if (confirmed === "already") {
-      toast.info("Your subscription is already confirmed.");
-      setInitialTab("status");
-      return;
-    }
-
-    toast.error("Confirmation failed. The link may be invalid or expired.");
-    setInitialTab("subscribe");
   }, []);
 
-  return initialTab;
+  return pendingToken;
 }

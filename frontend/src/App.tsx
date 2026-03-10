@@ -6,6 +6,7 @@ import {
   useSubscribe,
   useGetSubscription,
   useUnsubscribe,
+  useConfirmSubscription,
   getErrorMessage,
 } from "./hooks/useSubscription";
 import { useConfirmRedirect } from "./hooks/useConfirmRedirect";
@@ -29,14 +30,16 @@ const TOPICS: Topic[] = [
 ];
 
 function App() {
-  const initialTab = useConfirmRedirect();
-  const [tab, setTab] = useState<TabItem>(initialTab);
+  const initialPendingToken = useConfirmRedirect();
+  const [pendingToken, setPendingToken] = useState<string | null>(initialPendingToken);
+  const [tab, setTab] = useState<TabItem>("subscribe");
   const [email, setEmail] = useState("");
   const [topics, setTopics] = useState<TopicId[]>([]);
   const [statusSubmitted, setStatusSubmitted] = useState(false);
 
   const subscribeMutation = useSubscribe();
   const unsubscribeMutation = useUnsubscribe();
+  const confirmMutation = useConfirmSubscription();
   const statusQuery = useGetSubscription(email);
 
   const toggleTopic = (id: TopicId) => {
@@ -95,6 +98,91 @@ function App() {
       });
     }
   };
+
+  if (pendingToken !== null) {
+    return (
+      <div className="min-h-screen bg-[#080d14] text-slate-100 flex flex-col">
+        {/* ── HEADER ── */}
+        <header className="border-b border-white/6 px-6 py-4">
+          <div className="max-w-5xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold tracking-[0.18em] text-white uppercase">
+                Market Snapshot
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-sm bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold tracking-widest uppercase">
+                Newsletter
+              </span>
+            </div>
+            <span className="text-xs text-slate-600 tracking-wide hidden sm:block">
+              Daily Updates
+            </span>
+          </div>
+        </header>
+
+        {/* ── MAIN ── */}
+        <main className="flex-1 flex items-start justify-center px-6 pt-16 pb-28">
+          <div className="w-full max-w-md">
+            <div className="mb-10">
+              <p className="text-[10px] font-bold tracking-[0.25em] text-blue-500 uppercase mb-4">
+                Daily Chart Digest
+              </p>
+              <h1 className="text-[2rem] font-bold text-white leading-tight tracking-tight mb-3">
+                {confirmMutation.isSuccess
+                  ? "YOU'RE ALL SET."
+                  : "CONFIRM YOUR SUBSCRIPTION."}
+              </h1>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                {confirmMutation.isSuccess
+                  ? "Pre-market chart updates will arrive every weekday at 5:30 AM EST."
+                  : "Click below to activate your Market Snapshot subscription."}
+              </p>
+            </div>
+
+            <div className="bg-[#0c1420] border border-white/[0.07] rounded-lg overflow-hidden p-6">
+              {confirmMutation.isSuccess ? (
+                <p className="text-sm font-semibold text-green-400 text-center">
+                  {confirmMutation.data.message === "already_confirmed"
+                    ? "Your subscription is already active."
+                    : "Subscription confirmed!"}
+                </p>
+              ) : confirmMutation.isError ? (
+                <div className="text-center">
+                  <p className="text-sm text-red-400 mb-4">
+                    {getErrorMessage(confirmMutation.error)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setPendingToken(null)}
+                    className="text-xs text-blue-400 underline cursor-pointer"
+                  >
+                    Back to subscribe
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={confirmMutation.isPending}
+                  onClick={() => confirmMutation.mutate(pendingToken)}
+                  className="w-full py-3 rounded text-sm font-semibold tracking-wide bg-blue-600 hover:bg-blue-500 text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {confirmMutation.isPending ? "Confirming..." : "Confirm Subscription"}
+                </button>
+              )}
+            </div>
+          </div>
+        </main>
+
+        {/* ── FOOTER ── */}
+        <footer className="border-t border-white/5 px-6 py-4">
+          <div className="max-w-5xl mx-auto">
+            <p className="text-[11px] text-slate-700 text-center">
+              Market Snapshot — Daily Trading Updates
+            </p>
+          </div>
+        </footer>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#080d14] text-slate-100 flex flex-col">

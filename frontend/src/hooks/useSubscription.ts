@@ -52,3 +52,9 @@ export function useUnsubscribe() {
     },
   });
 }
+
+export function useConfirmSubscription() {
+  return useMutation({
+    mutationFn: (token: string) => subscriptionApi.confirmSubscription(token),
+  });
+}

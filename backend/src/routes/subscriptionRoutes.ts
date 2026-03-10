@@ -66,17 +66,32 @@ router.post("/subscribe", apiKeyAuth, async (req, res) => {
   }
 });
 
-// GET /subscription/confirm?token=... - Confirm subscription and redirect to frontend
-router.get("/subscription/confirm", async (req, res) => {
-  try {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const rawToken = req.query.token;
+// GET /subscription/confirm?token=... - Legacy link support: redirect to frontend confirm page
+// (Old confirmation emails link directly to this endpoint; we now redirect so confirmation
+//  requires an explicit user action rather than a GET request that email scanners could trigger.)
+router.get("/subscription/confirm", (req, res) => {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const rawToken = req.query.token;
+  const isValidToken =
+    typeof rawToken === "string" && /^[0-9a-f]{64}$/i.test(rawToken);
 
+  if (!isValidToken) {
+    return res.redirect(`${frontendUrl}?confirmed=error`);
+  }
+
+  // Hand off to the frontend; the user must click "Confirm" there to activate.
+  return res.redirect(`${frontendUrl}?token=${rawToken}`);
+});
+
+// POST /subscription/confirm - Activate subscription (called by frontend confirm button)
+router.post("/subscription/confirm", async (req, res) => {
+  try {
+    const rawToken = req.body.token;
     const isValidToken =
       typeof rawToken === "string" && /^[0-9a-f]{64}$/i.test(rawToken);
 
     if (!isValidToken) {
-      return res.redirect(`${frontendUrl}?confirmed=error`);
+      return res.status(400).json({ error: "Invalid or missing token" });
     }
 
     const token = rawToken as string;
@@ -84,11 +99,11 @@ router.get("/subscription/confirm", async (req, res) => {
     const subscription = await tableService.getSubscriptionByToken(token);
 
     if (!subscription) {
-      return res.redirect(`${frontendUrl}?confirmed=error`);
+      return res.status(404).json({ error: "Confirmation link is invalid or has expired" });
     }
 
     if (subscription.status === "active") {
-      return res.redirect(`${frontendUrl}?confirmed=already`);
+      return res.status(200).json({ message: "already_confirmed" });
     }
 
     await tableService.updateSubscriptionStatus(
@@ -97,11 +112,10 @@ router.get("/subscription/confirm", async (req, res) => {
       new Date().toISOString(),
     );
 
-    return res.redirect(`${frontendUrl}?confirmed=success`);
+    return res.status(200).json({ message: "confirmed" });
   } catch (error) {
     console.error("Confirm subscription error:", error);
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    return res.redirect(`${frontendUrl}?confirmed=error`);
+    res.status(500).json({ error: "Failed to confirm subscription" });
   }
 });
 

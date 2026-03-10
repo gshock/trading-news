@@ -67,7 +67,7 @@ async function startServer() {
     await tableService.ensureTableExists();
     console.log("Azure Table Storage initialized");
 
-    // Start the pre-market briefing scheduler (9:00 AM EST, Mon-Fri)
+    // Start the pre-market briefing scheduler (5:30 AM EST, Mon-Fri)
     if (process.env.ENABLE_SCHEDULER !== "false") {
       const scheduler = new SchedulerService();
       scheduler.start();
