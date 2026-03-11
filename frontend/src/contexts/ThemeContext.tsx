@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -27,6 +28,14 @@ function applyToDOM(resolved: ResolvedTheme) {
   document.documentElement.classList.toggle("light", resolved === "light");
 }
 
+// Stable reference to the latest callback without re-triggering effects
+function useEffectEvent<T extends (...args: unknown[]) => unknown>(fn: T): T {
+  const ref = useRef(fn);
+  ref.current = fn;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useCallback(((...args: unknown[]) => ref.current(...args)) as T, []);
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(
     () => (localStorage.getItem(STORAGE_KEY) as Theme) || "system",
@@ -44,21 +53,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
   }, [resolvedTheme, setTheme]);
 
-  useEffect(() => {
-    const resolved = resolve(theme);
+  const onThemeChange = useEffectEvent((resolved: ResolvedTheme) => {
     setResolvedTheme(resolved);
     applyToDOM(resolved);
+  });
+
+  // Apply whenever theme preference changes
+  useEffect(() => {
+    onThemeChange(resolve(theme));
   }, [theme]);
 
   // React to OS-level preference changes when set to "system"
   useEffect(() => {
     if (theme !== "system") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = () => {
-      const resolved = getSystemTheme();
-      setResolvedTheme(resolved);
-      applyToDOM(resolved);
-    };
+    const handler = () => onThemeChange(getSystemTheme());
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, [theme]);
