@@ -6,7 +6,7 @@ export function Checkbox({ label, checked, onChange }: CheckboxProps) {
       className={`flex items-center gap-2.5 flex-1 px-4 py-3 rounded border cursor-pointer transition-colors ${
         checked
           ? "border-blue-500/50 bg-blue-600/10"
-          : "border-white/8 bg-[#080d14] hover:border-white/15"
+          : "border-(--border-input) bg-(--bg-input) hover:border-(--border-card)"
       }`}
     >
       <input
@@ -17,7 +17,7 @@ export function Checkbox({ label, checked, onChange }: CheckboxProps) {
       />
       <span
         className={`w-4 h-4 rounded-sm border flex items-center justify-center shrink-0 transition-colors ${
-          checked ? "bg-blue-600 border-blue-600" : "border-white/20"
+          checked ? "bg-blue-600 border-blue-600" : "border-(--text-faint)"
         }`}
       >
         {checked && (
@@ -37,7 +37,7 @@ export function Checkbox({ label, checked, onChange }: CheckboxProps) {
         )}
       </span>
       <span
-        className={`text-xs font-semibold tracking-wide ${checked ? "text-white" : "text-slate-500"}`}
+        className={`text-xs font-semibold tracking-wide ${checked ? "text-(--text-heading)" : "text-(--text-secondary)"}`}
       >
         {label}
       </span>

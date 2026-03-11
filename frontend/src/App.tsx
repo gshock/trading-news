@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import { toast } from "react-toastify";
 import type { TabItem, Tab, TopicId, Topic } from "./types/tabs";
 import { Checkbox } from "./components/checkbox";
+import { ThemeToggle } from "./components/ThemeToggle";
 import {
   useSubscribe,
   useGetSubscription,
@@ -101,21 +102,24 @@ function App() {
 
   if (pendingToken !== null) {
     return (
-      <div className="min-h-screen bg-[#080d14] text-slate-100 flex flex-col">
+      <div className="min-h-screen bg-(--bg-page) text-(--text-body) flex flex-col transition-colors duration-300">
         {/* ── HEADER ── */}
-        <header className="border-b border-white/6 px-6 py-4">
+        <header className="border-b border-(--border-subtle) px-6 py-4">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-bold tracking-[0.18em] text-white uppercase">
+              <span className="text-sm font-bold tracking-[0.18em] text-(--text-heading) uppercase">
                 Market Snapshot
               </span>
               <span className="text-[10px] px-2 py-0.5 rounded-sm bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold tracking-widest uppercase">
                 Newsletter
               </span>
             </div>
-            <span className="text-xs text-slate-600 tracking-wide hidden sm:block">
-              Daily Updates
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-(--text-secondary) tracking-wide hidden sm:block">
+                Daily Updates
+              </span>
+              <ThemeToggle />
+            </div>
           </div>
         </header>
 
@@ -126,21 +130,21 @@ function App() {
               <p className="text-[10px] font-bold tracking-[0.25em] text-blue-500 uppercase mb-4">
                 Daily Chart Digest
               </p>
-              <h1 className="text-[2rem] font-bold text-white leading-tight tracking-tight mb-3">
+              <h1 className="text-[2rem] font-bold text-(--text-heading) leading-tight tracking-tight mb-3">
                 {confirmMutation.isSuccess
                   ? "YOU'RE ALL SET."
                   : "CONFIRM YOUR SUBSCRIPTION."}
               </h1>
-              <p className="text-sm text-slate-500 leading-relaxed">
+              <p className="text-sm text-(--text-secondary) leading-relaxed">
                 {confirmMutation.isSuccess
                   ? "Pre-market chart updates will arrive every weekday at 5:30 AM EST."
                   : "Click below to activate your Market Snapshot subscription."}
               </p>
             </div>
 
-            <div className="bg-[#0c1420] border border-white/[0.07] rounded-lg overflow-hidden p-6">
+            <div className="bg-(--bg-card) border border-(--border-card) rounded-lg overflow-hidden p-6 transition-colors duration-300">
               {confirmMutation.isSuccess ? (
-                <p className="text-sm font-semibold text-green-400 text-center">
+                <p className="text-sm font-semibold text-green-500 text-center">
                   {confirmMutation.data.message === "already_confirmed"
                     ? "Your subscription is already active."
                     : "Subscription confirmed!"}
@@ -173,9 +177,9 @@ function App() {
         </main>
 
         {/* ── FOOTER ── */}
-        <footer className="border-t border-white/5 px-6 py-4">
+        <footer className="border-t border-(--border-subtle) px-6 py-4">
           <div className="max-w-5xl mx-auto">
-            <p className="text-[11px] text-slate-700 text-center">
+            <p className="text-[11px] text-(--text-faint) text-center">
               Market Snapshot — Daily Trading Updates
             </p>
           </div>
@@ -185,21 +189,24 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080d14] text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-(--bg-page) text-(--text-body) flex flex-col transition-colors duration-300">
       {/* ── HEADER ── */}
-      <header className="border-b border-white/6 px-6 py-4">
+      <header className="border-b border-(--border-subtle) px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-bold tracking-[0.18em] text-white uppercase">
+            <span className="text-sm font-bold tracking-[0.18em] text-(--text-heading) uppercase">
               Market Snapshot
             </span>
             <span className="text-[10px] px-2 py-0.5 rounded-sm bg-blue-600/20 text-blue-400 border border-blue-500/30 font-semibold tracking-widest uppercase">
               Newsletter
             </span>
           </div>
-          <span className="text-xs text-slate-600 tracking-wide hidden sm:block">
-            Daily Updates
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-(--text-secondary) tracking-wide hidden sm:block">
+              Daily Updates
+            </span>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -211,18 +218,18 @@ function App() {
             <p className="text-[10px] font-bold tracking-[0.25em] text-blue-500 uppercase mb-4">
               Daily Chart Digest
             </p>
-            <h1 className="text-[2rem] font-bold text-white leading-tight tracking-tight mb-3">
+            <h1 className="text-[2rem] font-bold text-(--text-heading) leading-tight tracking-tight mb-3">
               STAY AHEAD OF THE MARKET.
             </h1>
-            <p className="text-sm text-slate-500 leading-relaxed">
+            <p className="text-sm text-(--text-secondary) leading-relaxed">
               Chart snapshots delivered to your inbox every session.
             </p>
           </div>
 
           {/* Card */}
-          <div className="bg-[#0c1420] border border-white/[0.07] rounded-lg overflow-hidden">
+          <div className="bg-(--bg-card) border border-(--border-card) rounded-lg overflow-hidden transition-colors duration-300">
             {/* Tabs */}
-            <div className="flex border-b border-white/[0.07]">
+            <div className="flex border-b border-(--border-card)">
               {TABS.map((t) => (
                 <button
                   key={t.id}
@@ -230,8 +237,8 @@ function App() {
                   onClick={() => handleTabChange(t.id)}
                   className={`flex-1 py-3 text-[11px] font-semibold tracking-wide transition-colors cursor-pointer ${
                     tab === t.id
-                      ? "text-white border-b-2 border-blue-500 bg-blue-600/5"
-                      : "text-slate-600 hover:text-slate-400"
+                      ? "text-(--text-heading) border-b-2 border-blue-500 bg-blue-600/5"
+                      : "text-(--text-muted) hover:text-(--text-secondary)"
                   }`}
                 >
                   {t.label}
@@ -241,7 +248,7 @@ function App() {
 
             {/* Form */}
             <form className="p-6" onSubmit={handleSubmit}>
-              <label className="block text-[10px] font-bold text-slate-500 tracking-[0.15em] uppercase mb-2">
+              <label className="block text-[10px] font-bold text-(--text-secondary) tracking-[0.15em] uppercase mb-2">
                 Email address
               </label>
               <input
@@ -249,12 +256,12 @@ function App() {
                 value={email}
                 onChange={handleEmailChange}
                 placeholder="you@example.com"
-                className="w-full bg-[#080d14] border border-white/9 rounded px-4 py-3 text-sm text-white placeholder-slate-700 outline-none focus:border-blue-600/60 transition-colors mb-4"
+                className="w-full bg-(--bg-input) border border-(--border-input) rounded px-4 py-3 text-sm text-(--text-heading) placeholder-(--text-faint) outline-none focus:border-blue-600/60 transition-colors mb-4"
               />
 
               {tab === "subscribe" && (
                 <div className="mb-4">
-                  <p className="text-[10px] font-bold text-slate-500 tracking-[0.15em] uppercase mb-3">
+                  <p className="text-[10px] font-bold text-(--text-secondary) tracking-[0.15em] uppercase mb-3">
                     Sessions
                   </p>
                   <div className="flex gap-3">
@@ -291,22 +298,22 @@ function App() {
               )}
 
               {tab === "status" && statusSubmitted && statusQuery.data && (
-                <div className="mt-4 p-3 rounded bg-[#080d14] border border-white/8">
-                  <p className="text-xs text-slate-400">
+                <div className="mt-4 p-3 rounded bg-(--status-bg) border border-(--border-card)">
+                  <p className="text-xs text-(--text-secondary)">
                     Status:{" "}
-                    <span className="text-white font-semibold">
+                    <span className="text-(--text-heading) font-semibold">
                       {statusQuery.data.status}
                     </span>
                   </p>
                   {statusQuery.data.topics && (
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-(--text-secondary) mt-1">
                       Topics:{" "}
-                      <span className="text-white">
+                      <span className="text-(--text-heading)">
                         {statusQuery.data.topics}
                       </span>
                     </p>
                   )}
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-(--text-muted) mt-1">
                     Since{" "}
                     {new Date(statusQuery.data.createdUtc).toLocaleDateString()}
                   </p>
@@ -322,7 +329,7 @@ function App() {
               )}
 
               {tab === "subscribe" && !subscribeMutation.isSuccess && (
-                <p className="mt-4 text-[11px] text-slate-700 text-center">
+                <p className="mt-4 text-[11px] text-(--text-faint) text-center">
                   No spam. Unsubscribe any time.
                 </p>
               )}
@@ -332,9 +339,9 @@ function App() {
       </main>
 
       {/* ── FOOTER ── */}
-      <footer className="border-t border-white/5 px-6 py-4">
+      <footer className="border-t border-(--border-subtle) px-6 py-4">
         <div className="max-w-5xl mx-auto">
-          <p className="text-[11px] text-slate-700 text-center">
+          <p className="text-[11px] text-(--text-faint) text-center">
             Market Snapshot — Daily Trading Updates
           </p>
         </div>
