@@ -1,4 +1,4 @@
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../hooks/useTheme";
 
 export function ThemeToggle() {
   const { resolvedTheme, toggle } = useTheme();
@@ -14,7 +14,7 @@ export function ThemeToggle() {
     >
       {/* Sun */}
       <svg
-        className={`absolute w-[18px] h-[18px] transition-all duration-300 ease-in-out ${
+        className={`absolute w-4.5 h-4.5 transition-all duration-300 ease-in-out ${
           isDark
             ? "opacity-0 rotate-90 scale-0"
             : "opacity-100 rotate-0 scale-100"
@@ -39,7 +39,7 @@ export function ThemeToggle() {
 
       {/* Moon */}
       <svg
-        className={`absolute w-[18px] h-[18px] transition-all duration-300 ease-in-out ${
+        className={`absolute w-4.5 h-4.5 transition-all duration-300 ease-in-out ${
           isDark
             ? "opacity-100 rotate-0 scale-100"
             : "opacity-0 -rotate-90 scale-0"

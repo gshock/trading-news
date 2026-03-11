@@ -32,7 +32,9 @@ const TOPICS: Topic[] = [
 
 function App() {
   const initialPendingToken = useConfirmRedirect();
-  const [pendingToken, setPendingToken] = useState<string | null>(initialPendingToken);
+  const [pendingToken, setPendingToken] = useState<string | null>(
+    initialPendingToken,
+  );
   const [tab, setTab] = useState<TabItem>("subscribe");
   const [email, setEmail] = useState("");
   const [topics, setTopics] = useState<TopicId[]>([]);
@@ -169,7 +171,9 @@ function App() {
                   onClick={() => confirmMutation.mutate(pendingToken)}
                   className="w-full py-3 rounded text-sm font-semibold tracking-wide bg-blue-600 hover:bg-blue-500 text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {confirmMutation.isPending ? "Confirming..." : "Confirm Subscription"}
+                  {confirmMutation.isPending
+                    ? "Confirming..."
+                    : "Confirm Subscription"}
                 </button>
               )}
             </div>
@@ -323,7 +327,8 @@ function App() {
               {tab === "subscribe" && subscribeMutation.isSuccess && (
                 <div className="mt-4 p-3 rounded bg-blue-600/10 border border-blue-500/30">
                   <p className="text-xs text-blue-300 text-center">
-                    Check your email and click the confirmation link to activate your subscription.
+                    Check your email and click the confirmation link to activate
+                    your subscription.
                   </p>
                 </div>
               )}

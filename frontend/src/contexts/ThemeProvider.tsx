@@ -1,15 +1,6 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
-import type { Theme, ResolvedTheme, ThemeContextValue } from "../types/theme";
-
-const ThemeContext = createContext<ThemeContextValue | null>(null);
+import { useEffect, useEffectEvent, useState, type ReactNode } from "react";
+import type { Theme, ResolvedTheme } from "../types/theme";
+import { ThemeContext } from "./ThemeContext";
 
 const STORAGE_KEY = "ms-theme";
 
@@ -28,14 +19,6 @@ function applyToDOM(resolved: ResolvedTheme) {
   document.documentElement.classList.toggle("light", resolved === "light");
 }
 
-// Stable reference to the latest callback without re-triggering effects
-function useEffectEvent<T extends (...args: unknown[]) => unknown>(fn: T): T {
-  const ref = useRef(fn);
-  ref.current = fn;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useCallback(((...args: unknown[]) => ref.current(...args)) as T, []);
-}
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(
     () => (localStorage.getItem(STORAGE_KEY) as Theme) || "system",
@@ -44,14 +27,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     resolve(theme),
   );
 
-  const setTheme = useCallback((next: Theme) => {
+  const setTheme = (next: Theme) => {
     setThemeState(next);
     localStorage.setItem(STORAGE_KEY, next);
-  }, []);
+  };
 
-  const toggle = useCallback(() => {
+  const toggle = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
-  }, [resolvedTheme, setTheme]);
+  };
 
   const onThemeChange = useEffectEvent((resolved: ResolvedTheme) => {
     setResolvedTheme(resolved);
@@ -77,10 +60,4 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       {children}
     </ThemeContext.Provider>
   );
-}
-
-export function useTheme(): ThemeContextValue {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
-  return ctx;
 }
