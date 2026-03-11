@@ -59,6 +59,10 @@ The frontend provides a clean subscription management portal with:
 - Light and dark mode with system preference detection and manual toggle
 - Mobile-responsive layout
 
+| Light Mode | Dark Mode |
+|:---:|:---:|
+| ![Light Mode UI](light-mode-ui.PNG) | ![Dark Mode UI](dark-mode-ui.PNG) |
+
 ---
 
 ## Real-World Use Cases
