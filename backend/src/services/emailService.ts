@@ -54,34 +54,33 @@ export class EmailService {
   ): Promise<void> {
     const html = this.tradingUpdateTemplate.render(snapshotData, title);
 
-    const attachments = await Promise.all(
-      snapshotData.entries.map(async (entry) => {
-        const ext = extname(entry.fileName).toLowerCase();
-        const contentType = MIME_TYPES[ext] ?? "application/octet-stream";
-        const blobUrl = this.blobStorageService.getBlobUrl(entry.path);
-        const contentInBase64 = await this.fetchAsBase64(blobUrl);
-        return {
-          name: entry.fileName,
-          contentType,
-          contentInBase64,
-          contentId: `chart-${entry.symbol.toLowerCase()}`,
-        };
-      }),
-    );
-
-    const message: EmailMessage = {
-      senderAddress: this.senderAddress,
-      content: {
-        subject: `${title} — ${formatLongDate(snapshotData.createdUtc)}`,
-        html,
-      },
-      recipients: {
-        bcc: recipients.map((email) => ({ address: email })),
-      },
-      attachments,
-    };
-
     try {
+      const attachments = await Promise.all(
+        snapshotData.entries.map(async (entry) => {
+          const ext = extname(entry.fileName).toLowerCase();
+          const contentType = MIME_TYPES[ext] ?? "application/octet-stream";
+          const blobUrl = this.blobStorageService.getBlobUrl(entry.path);
+          const contentInBase64 = await this.fetchAsBase64(blobUrl);
+          return {
+            name: entry.fileName,
+            contentType,
+            contentInBase64,
+            contentId: `chart-${entry.symbol.toLowerCase()}`,
+          };
+        }),
+      );
+
+      const message: EmailMessage = {
+        senderAddress: this.senderAddress,
+        content: {
+          subject: `${title} — ${formatLongDate(snapshotData.createdUtc)}`,
+          html,
+        },
+        recipients: {
+          bcc: recipients.map((email) => ({ address: email })),
+        },
+        attachments,
+      };
       const poller = await this.client.beginSend(message);
       await poller.pollUntilDone();
     } catch (error) {
