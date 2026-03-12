@@ -19,9 +19,16 @@ function applyToDOM(resolved: ResolvedTheme) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(
-    () => (localStorage.getItem(STORAGE_KEY) as Theme) || "system",
-  );
+  const [theme, setThemeState] = useState<Theme>(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "light" || stored === "dark" || stored === "system") {
+      return stored;
+    }
+    if (stored !== null) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    return "system";
+  });
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
     resolve(theme),
   );
