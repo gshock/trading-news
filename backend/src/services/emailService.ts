@@ -1,5 +1,6 @@
-import nodemailer from "nodemailer";
+import { EmailClient, type EmailMessage } from "@azure/communication-email";
 import { extname } from "node:path";
+import axios from "axios";
 import type { SnapshotIndex } from "../types/snapshot.js";
 import type { PreMarketBriefing } from "../agents/types.js";
 import { BlobStorageService } from "./blobStorageService.js";
@@ -17,34 +18,33 @@ const MIME_TYPES: Record<string, string> = {
 };
 
 export class EmailService {
-  private transporter;
+  private client: EmailClient;
+  private senderAddress: string;
   private blobStorageService: BlobStorageService;
   private tradingUpdateTemplate: TradingUpdateTemplate;
   private preMarketBriefingTemplate: PreMarketBriefingTemplate;
   private confirmSubscriptionTemplate: ConfirmSubscriptionTemplate;
 
   constructor() {
-    const emailUser = process.env.EMAIL_USER;
-    const emailPass = process.env.EMAIL_PASS;
-    if (!emailUser || !emailPass) {
+    const connectionString = process.env.ACS_CONNECTION_STRING;
+    const senderAddress = process.env.ACS_SENDER_ADDRESS;
+    if (!connectionString || !senderAddress) {
       throw new Error(
-        "EmailService configuration error: EMAIL_USER and EMAIL_PASS environment variables must be set.",
+        "EmailService configuration error: ACS_CONNECTION_STRING and ACS_SENDER_ADDRESS environment variables must be set.",
       );
     }
 
-    this.transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: emailUser,
-        pass: emailPass,
-      },
-    });
+    this.client = new EmailClient(connectionString);
+    this.senderAddress = senderAddress;
     this.blobStorageService = new BlobStorageService();
     this.tradingUpdateTemplate = new TradingUpdateTemplate();
     this.preMarketBriefingTemplate = new PreMarketBriefingTemplate();
     this.confirmSubscriptionTemplate = new ConfirmSubscriptionTemplate();
+  }
+
+  private async fetchAsBase64(url: string): Promise<string> {
+    const response = await axios.get(url, { responseType: "arraybuffer" });
+    return Buffer.from(response.data).toString("base64");
   }
 
   async sendTradingUpdate(
@@ -54,28 +54,35 @@ export class EmailService {
   ): Promise<void> {
     const html = this.tradingUpdateTemplate.render(snapshotData, title);
 
-    const attachments = snapshotData.entries.map((entry) => {
-      const ext = extname(entry.fileName).toLowerCase();
-      const contentType = MIME_TYPES[ext] ?? "application/octet-stream";
-      return {
-        filename: entry.fileName,
-        path: this.blobStorageService.getBlobUrl(entry.path),
-        cid: `chart-${entry.symbol.toLowerCase()}`,
-        contentType,
-      };
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER,
-      bcc: recipients,
-      subject: `${title} — ${formatLongDate(snapshotData.createdUtc)}`,
-      html,
-      attachments,
-    };
-
     try {
-      await this.transporter.sendMail(mailOptions);
+      const attachments = await Promise.all(
+        snapshotData.entries.map(async (entry) => {
+          const ext = extname(entry.fileName).toLowerCase();
+          const contentType = MIME_TYPES[ext] ?? "application/octet-stream";
+          const blobUrl = this.blobStorageService.getBlobUrl(entry.path);
+          const contentInBase64 = await this.fetchAsBase64(blobUrl);
+          return {
+            name: entry.fileName,
+            contentType,
+            contentInBase64,
+            contentId: `chart-${entry.symbol.toLowerCase()}`,
+          };
+        }),
+      );
+
+      const message: EmailMessage = {
+        senderAddress: this.senderAddress,
+        content: {
+          subject: `${title} — ${formatLongDate(snapshotData.createdUtc)}`,
+          html,
+        },
+        recipients: {
+          bcc: recipients.map((email) => ({ address: email })),
+        },
+        attachments,
+      };
+      const poller = await this.client.beginSend(message);
+      await poller.pollUntilDone();
     } catch (error) {
       throw new Error(
         `Failed to send email: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -90,27 +97,31 @@ export class EmailService {
     const html = this.preMarketBriefingTemplate.render(briefing);
     const date = formatLongDate(briefing.generatedAt);
 
-    const attachments: { filename: string; content: Buffer; cid: string; contentType: string }[] = [];
+    const attachments: { name: string; contentType: string; contentInBase64: string; contentId: string }[] = [];
     if (briefing.spyChartImage) {
       attachments.push({
-        filename: "spy-chart.png",
-        content: briefing.spyChartImage,
-        cid: "spy-chart",
+        name: "spy-chart.png",
         contentType: "image/png",
+        contentInBase64: briefing.spyChartImage.toString("base64"),
+        contentId: "spy-chart",
       });
     }
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER,
-      bcc: recipients,
-      subject: `Pre-Market Briefing — ${date}`,
-      html,
+    const message: EmailMessage = {
+      senderAddress: this.senderAddress,
+      content: {
+        subject: `Pre-Market Briefing — ${date}`,
+        html,
+      },
+      recipients: {
+        bcc: recipients.map((email) => ({ address: email })),
+      },
       attachments,
     };
 
     try {
-      await this.transporter.sendMail(mailOptions);
+      const poller = await this.client.beginSend(message);
+      await poller.pollUntilDone();
     } catch (error) {
       throw new Error(
         `Failed to send pre-market briefing email: ${
@@ -128,15 +139,20 @@ export class EmailService {
     const confirmUrl = `${frontendUrl}?token=${confirmToken}`;
     const html = this.confirmSubscriptionTemplate.render(email, confirmUrl);
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Confirm your Market Snapshot subscription",
-      html,
+    const message: EmailMessage = {
+      senderAddress: this.senderAddress,
+      content: {
+        subject: "Confirm your Market Snapshot subscription",
+        html,
+      },
+      recipients: {
+        to: [{ address: email }],
+      },
     };
 
     try {
-      await this.transporter.sendMail(mailOptions);
+      const poller = await this.client.beginSend(message);
+      await poller.pollUntilDone();
     } catch (error) {
       throw new Error(
         `Failed to send confirmation email: ${error instanceof Error ? error.message : "Unknown error"}`,
