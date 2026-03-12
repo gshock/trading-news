@@ -16,7 +16,6 @@ function resolve(theme: Theme): ResolvedTheme {
 
 function applyToDOM(resolved: ResolvedTheme) {
   document.documentElement.classList.toggle("dark", resolved === "dark");
-  document.documentElement.classList.toggle("light", resolved === "light");
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
