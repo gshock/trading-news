@@ -27,6 +27,10 @@
     "node-cron": "^4.0.7",
     "playwright": "^1.52.0"
   },
+  "engines": {
+    "node": ">=20",
+    "npm": ">=10"
+  },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
