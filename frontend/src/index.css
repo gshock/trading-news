@@ -1,8 +1,43 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap");
 @import "tailwindcss";
 
+/* ── Light mode (default) ── */
+:root {
+  --bg-page: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-input: #f1f5f9;
+  --text-heading: #0f172a;
+  --text-body: #334155;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-faint: #94a3b8;
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  --border-card: rgba(0, 0, 0, 0.08);
+  --border-input: rgba(0, 0, 0, 0.12);
+  --status-bg: #f1f5f9;
+}
+
+/* ── Dark mode ── */
+.dark {
+  --bg-page: #080d14;
+  --bg-card: #0c1420;
+  --bg-input: #080d14;
+  --text-heading: #f1f5f9;
+  --text-body: #cbd5e1;
+  --text-secondary: #64748b;
+  --text-muted: #475569;
+  --text-faint: #334155;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-card: rgba(255, 255, 255, 0.07);
+  --border-input: rgba(255, 255, 255, 0.09);
+  --status-bg: #080d14;
+}
+
 body {
   font-family: "Space Grotesk", sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-body);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .Toastify__toast {
