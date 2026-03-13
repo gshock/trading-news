@@ -130,7 +130,7 @@ export function SubscriptionForm() {
         {tab === "subscribe" && (
           <div className="mb-4">
             <p className="text-[10px] font-bold text-(--text-secondary) tracking-[0.15em] uppercase mb-3">
-              Sessions
+              Sector Snapshot
             </p>
             <div className="flex gap-3">
               {TOPICS.map((topic) => (
