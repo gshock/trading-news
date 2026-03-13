@@ -1,6 +1,10 @@
 import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
+import https from "node:https";
+import http from "node:http";
+import { readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import emailRoutes from "./routes/emailRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import agentRoutes from "./routes/agentRoutes.js";
@@ -73,9 +77,21 @@ async function startServer() {
       scheduler.start();
     }
 
-    app.listen(port, () => {
-      console.log(`Server is running on ${port}`);
-    });
+    const certPath = "localhost+1.pem";
+    const keyPath = "localhost+1-key.pem";
+    if (existsSync(certPath) && existsSync(keyPath)) {
+      const sslOptions = {
+        cert: readFileSync(certPath),
+        key: readFileSync(keyPath),
+      };
+      https.createServer(sslOptions, app).listen(port, () => {
+        console.log(`Server is running on https://localhost:${port}`);
+      });
+    } else {
+      http.createServer(app).listen(port, () => {
+        console.log(`Server is running on http://localhost:${port} (no SSL certs found)`);
+      });
+    }
   } catch (error) {
     console.error("Failed to initialize server:", error);
     process.exit(1);
