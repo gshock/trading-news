@@ -16,6 +16,7 @@
     "@azure/core-auth": "^1.9.0",
     "@azure/data-tables": "^13.3.2",
     "@azure/identity": "^4.13.0",
+    "@azure/storage-blob": "^12.26.0",
     "@mathieuc/tradingview": "^3.5.2",
     "axios": "^1.13.5",
     "chart.js": "^4.5.1",

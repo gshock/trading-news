@@ -8,6 +8,7 @@ import { existsSync } from "node:fs";
 import emailRoutes from "./routes/emailRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import agentRoutes from "./routes/agentRoutes.js";
+import orbRoutes from "./routes/orbRoutes.js";
 import { TableStorageService } from "./services/tableStorageService.js";
 import { SchedulerService } from "./services/schedulerService.js";
 
@@ -62,6 +63,7 @@ app.get("/", (req, res) => {
 app.use("/api/v1", emailRoutes);
 app.use("/api/v1", subscriptionRoutes);
 app.use("/api/v1", agentRoutes);
+app.use("/api/v1", orbRoutes);
 
 // Initialize table storage and start server
 async function startServer() {

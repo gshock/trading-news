@@ -2,7 +2,20 @@ import { chromium, type Browser, type Page } from "playwright";
 import type { EarningsEvent, AgentResult } from "./types.js";
 
 export class EarningsAgent {
-  private readonly url = "https://marketchameleon.com/Calendar/Earnings";
+  /**
+   * Builds the Finviz earnings calendar URL for today's date (in ET).
+   */
+  private buildUrl(): string {
+    const etDateStr = new Date().toLocaleDateString("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    // toLocaleDateString returns "MM/DD/YYYY" in en-US
+    const [mm, dd, yyyy] = etDateStr.split("/");
+    return `https://finviz.com/calendar/earnings?dateFrom=${yyyy}-${mm}-${dd}`;
+  }
 
   async collect(): Promise<AgentResult<EarningsEvent[]>> {
     let browser: Browser | undefined;
@@ -37,7 +50,9 @@ export class EarningsAgent {
       });
       const page = await context.newPage();
 
-      await page.goto(this.url, { waitUntil: "domcontentloaded", timeout: 45_000 });
+      const url = this.buildUrl();
+      console.log(`[EarningsAgent] Fetching: ${url}`);
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45_000 });
 
       // Wait for the earnings table rows to appear
       await page
@@ -45,7 +60,7 @@ export class EarningsAgent {
         .catch(() => {});
 
       // Extra wait for JS-rendered content
-      await page.waitForTimeout(2_500);
+      await page.waitForTimeout(3_000);
 
       const events = await this.parseEarningsTable(page);
 
@@ -72,82 +87,115 @@ export class EarningsAgent {
   }
 
   /**
-   * Uses the Playwright Node.js locator API exclusively — no page.evaluate() —
+   * Parses the Finviz earnings calendar table.
+   * Uses the Playwright Node.js locator API only — no page.evaluate() —
    * to avoid the tsx/esbuild __name injection bug in browser sandboxes.
+   *
+   * Finviz table columns (detected dynamically from headers):
+   *   #, Ticker, Company, Market Cap, FY End, EPS Estimate, EPS (1Y Ago),
+   *   Revenue Estimate, Revenue (1Y Ago), When
    */
   private async parseEarningsTable(page: Page): Promise<EarningsEvent[]> {
-    // Grab table rows; each row's innerText gives us tab/newline-delimited cells
-    const rows = page.locator("table tr");
-    const rowCount = await rows.count();
-
     const events: EarningsEvent[] = [];
+    const tables = page.locator("table");
+    const tableCount = await tables.count();
 
-    for (let i = 0; i < rowCount; i++) {
-      const row = rows.nth(i);
-      const rowText = await row.innerText().catch(() => "");
-      if (!rowText.trim()) continue;
+    for (let t = 0; t < tableCount; t++) {
+      const table = tables.nth(t);
+      const rows = table.locator("tr");
+      const rowCount = await rows.count();
+      if (rowCount < 2) continue;
 
-      // Split on tabs or multiple spaces to get individual cell values
-      const cells = rowText
-        .split(/\t|\n/)
-        .map((c) => c.trim())
-        .filter((c) => c.length > 0);
-
-      // Skip header rows (don't start with a ticker-like token)
-      if (!cells[0] || !/^[A-Z]{1,5}$/.test(cells[0])) continue;
-
-      const ticker = cells[0] ?? "";
-
-      // Determine report time from the row text
-      const upperText = rowText.toUpperCase();
-      let reportTime: EarningsEvent["reportTime"] = "Unknown";
-      if (upperText.includes("BMO") || upperText.includes("BEFORE MARKET")) {
-        reportTime = "BMO";
-      } else if (
-        upperText.includes("AMC") ||
-        upperText.includes("AFTER MARKET") ||
-        upperText.includes("AFTER CLOSE")
-      ) {
-        reportTime = "AMC";
-      } else if (upperText.includes("DURING MARKET")) {
-        reportTime = "During Market";
+      // Read each header cell individually — avoids tab/newline split ambiguity
+      const headerCells = rows.nth(0).locator("th, td");
+      const headerCount = await headerCells.count();
+      const headers: string[] = [];
+      for (let h = 0; h < headerCount; h++) {
+        const text = await headerCells.nth(h).innerText().catch(() => "");
+        headers.push(text.trim().toLowerCase());
       }
 
-      // Extract percentage values (e.g. "±3.5%", "4.2%", "-2.1%")
-      const percentages = rowText.match(/[±±\-+]?\d+\.?\d*%/g) ?? [];
+      // Only process tables that expose a Ticker/Symbol column
+      const hasTickerCol = headers.some((h) => h.includes("ticker") || h.includes("symbol"));
+      if (!hasTickerCol) continue;
 
-      // Extract market cap if present (e.g. "12.5B", "450M")
-      const marketCapMatch = /(\d+\.?\d*\s*[BbMmTt])\b/.exec(rowText);
+      // Map column keywords → index
+      const findCol = (...terms: string[]): number =>
+        headers.findIndex((h) => terms.some((term) => h.includes(term)));
 
-      // Company name: typically the second cell after ticker, before time-of-day tokens
-      // We extract it by looking for cells[1] that don't look like a number/percentage/date
-      const companyName = this.extractCompanyName(cells, ticker);
+      const tickerIdx  = findCol("ticker", "symbol");
+      const companyIdx = findCol("company", "name");
+      const capIdx     = findCol("market cap", "mkt cap");
+      const epsIdx     = findCol("eps estimate", "eps est");
+      // Finviz uses "Revenue Est" — avoid matching "Revenue (1Y Ago)" by requiring "est"
+      const revIdx     = headers.findIndex((h) => h.includes("revenue") && h.includes("est"));
+      const whenIdx    = findCol("when", "time", "session", "report time");
 
-      events.push({
-        ticker,
-        company: companyName,
-        reportTime,
-        expectedMove: percentages[0] ?? "",
-        impliedMove: percentages[1] ?? "",
-        historicalMove: percentages[2] ?? "",
-        marketCap: marketCapMatch ? marketCapMatch[1]! : "",
-      });
+      console.log("[EarningsAgent] Detected headers:", headers);
+      console.log("[EarningsAgent] Col indices — ticker:", tickerIdx, "company:", companyIdx,
+        "cap:", capIdx, "eps:", epsIdx, "rev:", revIdx, "when:", whenIdx);
+
+      // Parse data rows (skip header at index 0)
+      for (let i = 1; i < rowCount; i++) {
+        // Read each data cell individually for the same reason
+        const dataCells = rows.nth(i).locator("td");
+        const cellCount = await dataCells.count();
+        if (cellCount === 0) continue;
+
+        const cells: string[] = [];
+        for (let c = 0; c < cellCount; c++) {
+          const text = await dataCells.nth(c).innerText().catch(() => "");
+          cells.push(text.trim());
+        }
+
+        const ticker = tickerIdx >= 0 ? (cells[tickerIdx] ?? "") : (cells[1] ?? "");
+        // Validate: 1–6 uppercase letters, optional dot + 1–2 letters (e.g. BRK.B)
+        if (!ticker || !/^[A-Z]{1,6}(\.?[A-Z]{0,2})?$/.test(ticker)) continue;
+
+        const whenText = whenIdx >= 0 ? (cells[whenIdx] ?? "") : "";
+
+        events.push({
+          ticker,
+          company:          companyIdx >= 0 ? (cells[companyIdx] ?? "") : "",
+          reportTime:       this.parseReportTime(whenText),
+          marketCap:        capIdx     >= 0 ? (cells[capIdx]     ?? "") : "",
+          epsEstimate:      epsIdx     >= 0 ? (cells[epsIdx]     ?? "") : "",
+          revenueEstimate:  revIdx     >= 0 ? (cells[revIdx]     ?? "") : "",
+        });
+      }
+
+      if (events.length > 0) break; // Found the earnings table; stop scanning
     }
 
     return events;
   }
 
-  private extractCompanyName(cells: string[], ticker: string): string {
-    // Skip the ticker cell itself; find the first cell that looks like a company name
-    // (not purely numeric, not a percentage, not a short date, not BMO/AMC)
-    const skipPatterns = /^(\d|\+|-|±|%|BMO|AMC|N\/A|--)/i;
-    for (const cell of cells) {
-      if (cell === ticker) continue;
-      if (skipPatterns.test(cell)) continue;
-      if (/^\d{1,2}[\/\-]\d{1,2}/.test(cell)) continue; // date-like
-      if (cell.length < 2) continue;
-      return cell;
+  private parseReportTime(text: string): EarningsEvent["reportTime"] {
+    const upper = text.toUpperCase();
+    if (
+      upper.includes("BMO") ||
+      upper.includes("BEFORE OPEN") ||
+      upper.includes("BEFORE MARKET") ||
+      upper.includes("PRE-MARKET")
+    ) {
+      return "BMO";
     }
-    return "";
+    if (
+      upper.includes("AMC") ||
+      upper.includes("AFTER CLOSE") ||
+      upper.includes("AFTER MARKET") ||
+      upper.includes("POST-MARKET")
+    ) {
+      return "AMC";
+    }
+    if (
+      upper.includes("DURING") ||
+      upper.includes("INTRADAY") ||
+      upper.includes("TRADING HOURS") ||
+      upper.includes("MARKET HOURS")
+    ) {
+      return "During Market";
+    }
+    return "Unknown";
   }
 }

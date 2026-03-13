@@ -8,10 +8,13 @@ export class AgentController {
   }
 
   /** POST /agents/run — kick off the pre-market briefing on demand */
-  async runBriefing(_req: Request, res: Response): Promise<void> {
+  async runBriefing(req: Request, res: Response): Promise<void> {
+    const { email } = req.body as { email?: string };
     try {
-      console.log("[AgentController] On-demand briefing requested");
-      const briefing = await this.schedulerService.runNow();
+      console.log(
+        `[AgentController] On-demand briefing requested${email ? ` (preview: ${email})` : ""}`
+      );
+      const briefing = await this.schedulerService.runNow(email);
       res.status(200).json(briefing);
     } catch (error) {
       console.error("[AgentController] Briefing failed:", error);

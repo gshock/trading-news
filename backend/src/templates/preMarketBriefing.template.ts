@@ -65,7 +65,7 @@ export class PreMarketBriefingTemplate {
                 style="margin-top:24px;border-top:1px solid #e2e8f0;">
                 <tr>
                   <td style="padding-top:16px;font-size:11px;color:#94a3b8;text-align:center;line-height:1.6;">
-                    Data sourced from ForexFactory, CNN Markets, and Market Chameleon.<br>
+                    Data sourced from ForexFactory, CNN Markets, and Finviz.<br>
                     This briefing is for informational purposes only and does not constitute financial advice.
                   </td>
                 </tr>
@@ -174,13 +174,14 @@ export class PreMarketBriefingTemplate {
           <table width="100%" cellpadding="0" cellspacing="0" border="0"
             style="border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">
             <tr style="background-color:#f8fafc;">
-              <td style="padding:10px 14px;font-size:12px;color:#64748b;">Latest Close</td>
+              <td style="padding:10px 14px;font-size:12px;color:#64748b;">Current Price</td>
               <td style="padding:10px 14px;font-size:12px;font-weight:700;color:#1e293b;text-align:right;">$${d.latestClose.toFixed(2)}</td>
               <td style="padding:10px 14px;font-size:12px;color:#64748b;">20-Week SMA</td>
               <td style="padding:10px 14px;font-size:12px;font-weight:700;color:#1e293b;text-align:right;">$${d.latestSma.toFixed(2)}</td>
             </tr>
             <tr>
-              <td colspan="2" style="padding:10px 14px;font-size:12px;color:#64748b;">Price vs SMA</td>
+              <td style="padding:10px 14px;font-size:12px;color:#64748b;">Last Weekly Close</td>
+              <td style="padding:10px 14px;font-size:12px;font-weight:600;color:#475569;text-align:left;">$${d.latestWeeklyClose.toFixed(2)}</td>
               <td colspan="2" style="padding:10px 14px;font-size:13px;font-weight:700;color:${posColor};text-align:right;">
                 ${arrow} ${posLabel} by $${Math.abs(d.priceVsSma).toFixed(2)} (${d.priceVsSmaPct > 0 ? "+" : ""}${d.priceVsSmaPct.toFixed(2)}%)
               </td>
@@ -238,31 +239,31 @@ export class PreMarketBriefingTemplate {
       );
     }
 
-    const bmo = result.data.filter((e) => e.reportTime === "BMO");
-    const amc = result.data.filter((e) => e.reportTime === "AMC");
-    const other = result.data.filter((e) => e.reportTime !== "BMO" && e.reportTime !== "AMC");
+    const midCap = result.data.filter((e) => this.parseMarketCapBillions(e.marketCap) >= 2);
 
-    const buildGroup = (label: string, events: EarningsEvent[], bgColor: string) => {
-      if (!events.length) return "";
-      const rows = events
-        .map(
-          (e, i) => `
+    if (!midCap.length) {
+      return title + this.stateRow("No mid-cap or larger earnings reports scheduled today.", "empty");
+    }
+
+    // Sort: BMO first, then During Market, then AMC, then Unknown
+    const order: Record<string, number> = { BMO: 0, "During Market": 1, AMC: 2, Unknown: 3 };
+    const sorted = [...midCap].sort(
+      (a, b) => (order[a.reportTime] ?? 3) - (order[b.reportTime] ?? 3),
+    );
+
+    const rows = sorted
+      .map(
+        (e, i) => `
         <tr style="background-color:${i % 2 === 0 ? "#f8fafc" : "#ffffff"};">
           <td style="padding:7px 10px;font-size:12px;font-weight:700;color:#1e293b;">${e.ticker}</td>
           <td style="padding:7px 10px;font-size:12px;color:#475569;">${e.company || "—"}</td>
+          <td style="padding:7px 10px;font-size:12px;color:#64748b;text-align:center;">${this.abbreviateReportTime(e.reportTime)}</td>
           <td style="padding:7px 10px;font-size:12px;color:#64748b;text-align:right;">${e.marketCap || "—"}</td>
-          <td style="padding:7px 10px;font-size:12px;color:#64748b;text-align:right;">${e.expectedMove || "—"}</td>
+          <td style="padding:7px 10px;font-size:12px;color:#64748b;text-align:right;">${e.epsEstimate || "—"}</td>
+          <td style="padding:7px 10px;font-size:12px;color:#64748b;text-align:right;">${e.revenueEstimate || "—"}</td>
         </tr>`,
-        )
-        .join("");
-      return `
-        <tr>
-          <td colspan="4" style="padding:7px 10px;background-color:${bgColor};">
-            <span style="font-size:11px;font-weight:700;color:#ffffff;letter-spacing:0.5px;text-transform:uppercase;">${label}</span>
-          </td>
-        </tr>
-        ${rows}`;
-    };
+      )
+      .join("");
 
     return `
     ${title}
@@ -271,12 +272,12 @@ export class PreMarketBriefingTemplate {
       <tr style="background-color:#1e3a8a;">
         <th style="padding:8px 10px;font-size:11px;color:#93c5fd;font-weight:600;text-align:left;letter-spacing:0.5px;">TICKER</th>
         <th style="padding:8px 10px;font-size:11px;color:#93c5fd;font-weight:600;text-align:left;letter-spacing:0.5px;">COMPANY</th>
+        <th style="padding:8px 10px;font-size:11px;color:#93c5fd;font-weight:600;text-align:center;letter-spacing:0.5px;">TIME</th>
         <th style="padding:8px 10px;font-size:11px;color:#93c5fd;font-weight:600;text-align:right;letter-spacing:0.5px;">MKT CAP</th>
-        <th style="padding:8px 10px;font-size:11px;color:#93c5fd;font-weight:600;text-align:right;letter-spacing:0.5px;">EXP. MOVE</th>
+        <th style="padding:8px 10px;font-size:11px;color:#93c5fd;font-weight:600;text-align:right;letter-spacing:0.5px;">EPS EST</th>
+        <th style="padding:8px 10px;font-size:11px;color:#93c5fd;font-weight:600;text-align:right;letter-spacing:0.5px;">REV EST</th>
       </tr>
-      ${buildGroup("Before Market Open (BMO)", bmo, "#0284c7")}
-      ${buildGroup("After Market Close (AMC)", amc, "#0369a1")}
-      ${buildGroup("Other / Unconfirmed", other, "#475569")}
+      ${rows}
     </table>`;
   }
 
@@ -374,5 +375,25 @@ export class PreMarketBriefingTemplate {
   private stateRow(msg: string, type: "empty" | "error"): string {
     const color = type === "error" ? "#ef4444" : "#94a3b8";
     return `<p style="margin:0 0 24px;font-size:12px;color:${color};font-style:italic;">${msg}</p>`;
+  }
+
+  private abbreviateReportTime(reportTime: EarningsEvent["reportTime"]): string {
+    switch (reportTime) {
+      case "BMO": return "BMO";
+      case "AMC": return "AMC";
+      case "During Market": return "DMH";
+      default: return "—";
+    }
+  }
+
+  /** Parses Finviz market cap strings like "$2.57B", "$831.78M", "$3.49B" into billions. */
+  private parseMarketCapBillions(raw: string): number {
+    if (!raw) return -1;
+    const upper = raw.toUpperCase();
+    if (upper.includes("K") || upper.includes("M")) return 0; // thousands/millions — always below $2B
+    if (upper.includes("T")) return 999_999;                  // trillions — always above
+    const match = /\$?([\d,]+\.?\d*)\s*B/i.exec(raw);
+    if (!match) return -1;
+    return parseFloat(match[1]!.replace(/,/g, ""));
   }
 }

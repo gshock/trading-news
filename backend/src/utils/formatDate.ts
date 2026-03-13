@@ -12,7 +12,7 @@ export function formatTime(isoString: string): string {
   return new Date(isoString).toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "UTC",
+    timeZone: "America/New_York",
     timeZoneName: "short",
   });
 }

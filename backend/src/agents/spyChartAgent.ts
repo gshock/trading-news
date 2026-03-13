@@ -3,29 +3,70 @@ import type { SpyChartData, CandleData, AgentResult } from "./types.js";
 
 export class SpyChartAgent {
   private readonly symbol = "AMEX:SPY";
-  private readonly timeframe = "W"; // Weekly
   private readonly smaLength = 20;
-  // Fetch extra candles so we have enough history to compute SMA(20) for the display range
-  private readonly displayCandles = 52; // ~1 year of weekly candles
-  private readonly fetchCandles = 52 + 20; // extra for SMA warm-up
+  private readonly displayCandles = 52; // ~1 year of weekly candles for chart
+  private readonly fetchWeeklyCount = 52 + 20; // extra for SMA warm-up
+  private readonly fetchDailyCount = 20; // ~4 weeks of trading days
 
   async collect(): Promise<AgentResult<SpyChartData>> {
     try {
-      const candles = await this.fetchCandles_();
-      const smaValues = this.calculateSMA(candles);
+      // Fetch weekly and daily candles in parallel
+      const [weeklyCandles, dailyCandles] = await Promise.all([
+        this.fetchCandles("W", this.fetchWeeklyCount),
+        this.fetchCandles("D", this.fetchDailyCount),
+      ]);
 
-      // Trim to displayCandles (the oldest ones were only for SMA warm-up)
-      const displayCandles = candles.slice(0, this.displayCandles);
-      const displaySma = smaValues.slice(0, this.displayCandles);
+      const smaValues = this.calculateSMA(weeklyCandles);
 
-      const latest = displayCandles[0];
-      const latestSma = displaySma[0];
+      // Trim to displayCandles (oldest were only for SMA warm-up)
+      const allDisplayWeekly = weeklyCandles.slice(0, this.displayCandles);
+      const allDisplaySma = smaValues.slice(0, this.displayCandles);
 
-      if (!latest || latestSma === undefined || latestSma === null) {
+      // Latest SMA from the full weekly array (most recent computable)
+      const latestSma = smaValues[0] ?? 0;
+
+      // Cutoff: midnight UTC of the Monday that started last week
+      const cutoffTs = this.getLastWeekMondayTimestamp();
+
+      // Weekly chart candles: only those whose week started BEFORE last week
+      const weeklyDisplayCandles = allDisplayWeekly.filter((c) => c.time < cutoffTs);
+      const weeklyDisplaySma = allDisplaySma.filter(
+        (_v: number | null, i: number) => (allDisplayWeekly[i]?.time ?? 0) < cutoffTs,
+      );
+
+      // Daily candles for last week + this week (index 0 = today)
+      const recentDailyCandles = dailyCandles.filter((c) => c.time >= cutoffTs);
+
+      // Rolling daily SMA: for each recent daily candle, average of the
+      // 19 most-recent completed weekly closes + that day's close.
+      const completedWeeklyCloses = weeklyCandles
+        .slice(0, this.smaLength - 1)
+        .map((c) => c.close);
+      const recentDailySma: (number | null)[] = recentDailyCandles.map((daily) => {
+        if (completedWeeklyCloses.length < this.smaLength - 1) return null;
+        const sum =
+          completedWeeklyCloses.reduce((acc, v) => acc + v, 0) + daily.close;
+        return Math.round((sum / this.smaLength) * 100) / 100;
+      });
+
+      // Current price = most recent daily candle
+      const currentDayCandle = recentDailyCandles[0] ?? dailyCandles[0];
+      const currentPrice = currentDayCandle?.close ?? null;
+      const currentPriceDate = currentDayCandle
+        ? new Date(currentDayCandle.time * 1000).toISOString()
+        : null;
+
+      const latestClose = currentPrice ?? weeklyCandles[0]?.close ?? 0;
+      const latestWeeklyClose =
+        weeklyDisplayCandles.length > 0
+          ? (weeklyDisplayCandles[0]?.close ?? 0)
+          : (weeklyCandles[0]?.close ?? 0);
+
+      if (latestClose === 0 || latestSma === 0) {
         throw new Error("No candle data returned from TradingView");
       }
 
-      const priceVsSma: number = latest.close - latestSma;
+      const priceVsSma: number = latestClose - latestSma;
       const priceVsSmaPct: number = (priceVsSma / latestSma) * 100;
       const position: SpyChartData["position"] =
         priceVsSmaPct > 1 ? "above" : priceVsSmaPct < -1 ? "below" : "at";
@@ -37,10 +78,15 @@ export class SpyChartAgent {
           symbol: "SPY",
           timeframe: "Weekly",
           smaLength: this.smaLength,
-          candles: displayCandles,
-          sma: displaySma,
-          latestClose: latest.close,
-          latestSma: latestSma,
+          candles: weeklyDisplayCandles,
+          sma: weeklyDisplaySma,
+          recentDailyCandles,
+          recentDailySma,
+          latestClose,
+          latestWeeklyClose,
+          latestSma,
+          currentPrice,
+          currentPriceDate,
           priceVsSma,
           priceVsSmaPct,
           position,
@@ -61,20 +107,17 @@ export class SpyChartAgent {
     }
   }
 
-  private fetchCandles_(): Promise<CandleData[]> {
+  private fetchCandles(timeframe: string, count: number): Promise<CandleData[]> {
     return new Promise((resolve, reject) => {
       const client = new TradingView.Client();
       const chart = new client.Session.Chart();
 
       const timeout = setTimeout(() => {
         client.end();
-        reject(new Error("TradingView data fetch timed out after 30s"));
+        reject(new Error(`TradingView ${timeframe} data fetch timed out after 30s`));
       }, 30_000);
 
-      chart.setMarket(this.symbol, {
-        timeframe: this.timeframe,
-        range: this.fetchCandles,
-      });
+      chart.setMarket(this.symbol, { timeframe, range: count });
 
       chart.onError((...args: unknown[]) => {
         clearTimeout(timeout);
@@ -84,13 +127,21 @@ export class SpyChartAgent {
 
       let resolved = false;
       chart.onUpdate(() => {
-        // onUpdate may fire multiple times; only resolve once
         if (resolved) return;
         resolved = true;
         clearTimeout(timeout);
 
         const candles: CandleData[] = chart.periods.map(
-          (p: { time: number; open: number; high?: number; max?: number; low?: number; min?: number; close: number; volume: number }) => ({
+          (p: {
+            time: number;
+            open: number;
+            high?: number;
+            max?: number;
+            low?: number;
+            min?: number;
+            close: number;
+            volume: number;
+          }) => ({
             time: p.time,
             open: p.open,
             high: p.high ?? p.max ?? p.open,
@@ -104,6 +155,25 @@ export class SpyChartAgent {
         resolve(candles);
       });
     });
+  }
+
+  /**
+   * Returns the Unix timestamp (seconds) for Monday 00:00 UTC of last week.
+   * This is the cutoff between historical weekly data and the recent daily data.
+   */
+  private getLastWeekMondayTimestamp(): number {
+    const now = new Date();
+    const dow = now.getUTCDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+    const daysSinceMonday = dow === 0 ? 6 : dow - 1;
+
+    const thisMonday = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - daysSinceMonday),
+    );
+
+    const lastMonday = new Date(thisMonday);
+    lastMonday.setUTCDate(thisMonday.getUTCDate() - 7);
+
+    return Math.floor(lastMonday.getTime() / 1000);
   }
 
   private calculateSMA(candles: CandleData[]): (number | null)[] {

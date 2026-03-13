@@ -13,16 +13,38 @@ export async function renderSpyChart(data: SpyChartData): Promise<Buffer> {
   });
 
   // candles[0] is most recent — reverse so left-to-right is old→new
-  const candles = [...data.candles].reverse();
-  const sma = [...data.sma].reverse();
+  const weeklyCandles = [...data.candles].reverse();
+  const weeklySma = [...data.sma].reverse();
 
-  const labels = candles.map((c) => {
+  // recentDailyCandles[0] is most recent — reverse to old→new
+  const dailyCandles = [...data.recentDailyCandles].reverse();
+
+  // Merged dataset: historical weekly candles followed by recent daily candles
+  const allCandles = [...weeklyCandles, ...dailyCandles];
+
+  const labels = allCandles.map((c) => {
     const d = new Date(c.time * 1000);
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   });
 
-  const closePrices = candles.map((c) => c.close);
-  const smaValues = sma.map((v) => v ?? undefined);
+  const closePrices = allCandles.map((c) => c.close);
+
+  // SMA line: computed weekly values for the weekly section, then the rolling
+  // daily SMA approximation (19 completed weekly closes + each day's close).
+  // recentDailySma[0] = today — reverse to match the old→new order of dailyCandles.
+  const dailySmaAligned = [...data.recentDailySma].reverse();
+  const fallbackSma = weeklySma[weeklySma.length - 1] ?? data.latestSma;
+  const smaValues = [
+    ...weeklySma.map((v) => v ?? undefined),
+    ...dailyCandles.map((_, i) => dailySmaAligned[i] ?? fallbackSma),
+  ];
+
+  // Highlight today's close as a visible dot (last data point)
+  const lastIdx = allCandles.length - 1;
+  const pointRadii = allCandles.map((_, i) => (i === lastIdx ? 5 : 0));
+  const pointColors = allCandles.map((_, i) =>
+    i === lastIdx ? "#dc2626" : "transparent",
+  );
 
   const config: ChartConfiguration = {
     type: "line",
@@ -36,7 +58,9 @@ export async function renderSpyChart(data: SpyChartData): Promise<Buffer> {
           backgroundColor: "rgba(30, 64, 175, 0.08)",
           fill: true,
           borderWidth: 2,
-          pointRadius: 0,
+          pointRadius: pointRadii,
+          pointBackgroundColor: pointColors,
+          pointBorderColor: pointColors,
           tension: 0.1,
         },
         {

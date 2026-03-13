@@ -29,8 +29,9 @@ export class AgentOrchestratorService {
 
   /**
    * Runs all four agents in parallel, then sends results to Foundry for analysis.
+   * Pass `previewEmail` to send only to that single address instead of all subscribers.
    */
-  async runPreMarketBriefing(): Promise<PreMarketBriefing> {
+  async runPreMarketBriefing(previewEmail?: string): Promise<PreMarketBriefing> {
     console.log("[Orchestrator] Starting pre-market briefing...");
     const startTime = Date.now();
 
@@ -87,13 +88,19 @@ export class AgentOrchestratorService {
       generatedAt: new Date().toISOString(),
     };
 
-    // Send the briefing to all active subscribers
+    // Send the briefing — to the preview address if provided, otherwise all active subscribers
     try {
-      const subscribers = await this.tableStorageService.listSubscriptionsByStatus("active");
-      const recipients = subscribers.map((s) => s.rowKey);
+      let recipients: string[];
+      if (previewEmail) {
+        recipients = [previewEmail];
+        console.log(`[Orchestrator] Preview mode — sending to ${previewEmail} only.`);
+      } else {
+        const subscribers = await this.tableStorageService.listSubscriptionsByStatus("active");
+        recipients = subscribers.map((s) => s.rowKey);
+      }
       if (recipients.length > 0) {
         await this.emailService.sendPreMarketBriefing(briefing, recipients);
-        console.log(`[Orchestrator] Briefing emailed to ${recipients.length} subscriber(s).`);
+        console.log(`[Orchestrator] Briefing emailed to ${recipients.length} recipient(s).`);
       } else {
         console.log("[Orchestrator] No active subscribers — skipping email.");
       }

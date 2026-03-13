@@ -2,7 +2,7 @@ import { EmailClient, type EmailMessage } from "@azure/communication-email";
 import { extname } from "node:path";
 import axios from "axios";
 import type { SnapshotIndex } from "../types/snapshot.js";
-import type { PreMarketBriefing } from "../agents/types.js";
+import type { PreMarketBriefing, ForexEvent, AgentResult } from "../agents/types.js";
 import { BlobStorageService } from "./blobStorageService.js";
 import { TradingUpdateTemplate } from "../templates/tradingUpdate.template.js";
 import { PreMarketBriefingTemplate } from "../templates/preMarketBriefing.template.js";
@@ -51,8 +51,10 @@ export class EmailService {
     snapshotData: SnapshotIndex,
     recipients: string[],
     title: string,
+    forexEvents?: AgentResult<ForexEvent[]>,
+    analysis?: string | null,
   ): Promise<void> {
-    const html = this.tradingUpdateTemplate.render(snapshotData, title);
+    const html = this.tradingUpdateTemplate.render(snapshotData, title, forexEvents, analysis);
 
     try {
       const attachments = await Promise.all(

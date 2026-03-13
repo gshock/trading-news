@@ -176,6 +176,26 @@ export class TableStorageService {
   }
 
   /**
+   * List active subscribers who have opted into a specific topic.
+   * `topics` is stored as a comma-separated string (e.g. "945AM, 10AM").
+   * Filtering is done client-side because Azure Table Storage OData does not
+   * support substring / contains operations.
+   */
+  async listSubscriptionsByTopic(
+    topic: string,
+  ): Promise<SubscriptionEntity[]> {
+    const all = await this.listSubscriptionsByStatus("active");
+    const needle = topic.trim().toLowerCase();
+    return all.filter((s) => {
+      if (!s.topics) return false;
+      return s.topics
+        .split(",")
+        .map((t) => t.trim().toLowerCase())
+        .includes(needle);
+    });
+  }
+
+  /**
    * Find a subscription by its confirmation token
    */
   async getSubscriptionByToken(
