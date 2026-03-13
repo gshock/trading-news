@@ -89,6 +89,7 @@ The frontend provides a clean subscription management portal with:
 | **Azure Container Apps**                    | Hosts the backend API and scheduled agent pipeline with Managed Identity support                    |
 | **Azure Static Web Apps**                   | Hosts the frontend subscription portal with SPA routing and security headers                        |
 | **Azure Identity (DefaultAzureCredential)** | Provides credential management across Azure services using Managed Identity in production           |
+| **Azure Communication Services (Email)**    | Sends transactional emails (subscription confirmations and pre-market briefings) via ACS Email     |
 
 ### Frontend
 
@@ -110,7 +111,7 @@ The frontend provides a clean subscription management portal with:
 | **TypeScript**                     | Type-safe server development                        |
 | **Node-Cron**                      | Scheduled task execution                            |
 | **Playwright**                     | Headless browser automation for web scraping agents |
-| **Nodemailer**                     | Email delivery via Gmail SMTP                       |
+| **Azure Communication Services SDK** | Email delivery via ACS Email                        |
 | **Chart.js + chartjs-node-canvas** | Server-side chart rendering to PNG                  |
 | **express-rate-limit**             | API rate limiting                                   |
 | **Docker**                         | Containerized deployment                            |
@@ -118,6 +119,7 @@ The frontend provides a clean subscription management portal with:
 ### Azure SDKs
 
 - `@azure-rest/ai-inference` — Azure AI Foundry model inference
+- `@azure/communication-email` — Azure Communication Services email sending
 - `@azure/data-tables` — Azure Table Storage operations
 - `@azure/identity` — Managed Identity and credential handling
 - `@azure/core-auth` — Shared authentication utilities
