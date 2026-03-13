@@ -1,4 +1,4 @@
-export type TopicId = "945AM" | "10AM";
+export type TopicId = "530AM" | "945AM" | "10AM";
 
 export type TabItem = "subscribe" | "status" | "unsubscribe";
 
