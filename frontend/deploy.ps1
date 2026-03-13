@@ -17,10 +17,10 @@ $ErrorActionPreference = "Stop"
 
 $FrontendDir = $PSScriptRoot
 
-Write-Host "`n==> Checking for .env file..." -ForegroundColor Cyan
-$EnvFile = Join-Path $FrontendDir ".env"
+Write-Host "`n==> Checking for .env.production file..." -ForegroundColor Cyan
+$EnvFile = Join-Path $FrontendDir ".env.production"
 if (-not (Test-Path $EnvFile)) {
-    Write-Error ".env file not found at $EnvFile. Copy .env.example and fill in VITE_API_URL and VITE_API_KEY before deploying."
+    Write-Error ".env.production file not found at $EnvFile. Copy the PRODUCTION block from .env.example into .env.production and fill in VITE_API_URL and VITE_API_KEY before deploying."
 }
 
 Write-Host "==> Installing dependencies..." -ForegroundColor Cyan

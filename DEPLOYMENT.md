@@ -335,11 +335,25 @@ Each frontend that consumes this backend is deployed as a separate **Azure Stati
 
 ## Environment Variables (Build-time)
 
-Copy `frontend/.env.example` to `frontend/.env` and fill in the values:
+Vite uses separate env files per context — no manual URL swapping needed:
 
+| File | Used by | Committed? |
+|---|---|---|
+| `.env.local` | `vite dev` (local dev) | No |
+| `.env.production` | `vite build` (deploy) | No |
+
+Copy the relevant block from `frontend/.env.example` into each file:
+
+**`.env.local`** (local dev):
+```
+VITE_API_URL=https://localhost:3000/api/v1
+VITE_API_KEY=<same value as SEND_MAIL_API_KEY in backend/.env>
+```
+
+**`.env.production`** (required before running `deploy.ps1`):
 ```
 VITE_API_URL=https://trading-news-backend.salmonflower-e01ae160.eastus2.azurecontainerapps.io/api/v1
-VITE_API_KEY=<same value as SEND_MAIL_API_KEY on the backend>
+VITE_API_KEY=<same value as SEND_MAIL_API_KEY secret in Azure Container Apps>
 ```
 
 > **Note:** `VITE_*` variables are embedded into the JS bundle at build time. The API key will be visible in the browser. This is intentional — it gates which frontend clients can hit the backend, not which end-users.

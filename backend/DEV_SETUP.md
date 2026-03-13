@@ -30,9 +30,9 @@ copy .env.example .env
 Edit `.env` with these values (provided by your project lead):
 
 ```dotenv
-# Email Configuration (use test credentials)
-EMAIL_USER=test-account@gmail.com
-EMAIL_PASS=test-app-password
+# Azure Communication Services (use dev/test ACS resource)
+ACS_CONNECTION_STRING=endpoint=https://<dev-resource>.communication.azure.com/;accesskey=<key>
+ACS_SENDER_ADDRESS=DoNotReply@<guid>.azurecomm.net
 
 # Azure Blob Storage (dev environment)
 BLOB_STORAGE_BASE_URL=https://mrtraderstore6111dev.blob.core.windows.net/trader-pub
@@ -44,6 +44,8 @@ AZURE_TABLE_NAME=subscriptions
 
 # Server Configuration
 PORT=3000
+FRONTEND_URL=https://localhost:5173
+API_URL=https://localhost:3000/api/v1
 ```
 
 ### 4. Run the Application
@@ -52,7 +54,7 @@ PORT=3000
 npm run dev
 ```
 
-The server will start at http://localhost:3000/
+The server will start at https://localhost:3000/ (falls back to http if SSL certs are not present — see [DEPLOYMENT.md](../DEPLOYMENT.md#local-development-with-ssl))
 
 ### 5. Test the API
 
@@ -113,8 +115,8 @@ curl -X DELETE http://localhost:3000/api/v1/subscription/test@example.com
 - Cannot access production credentials
 - Cannot modify secrets
 
-❌ **Production Email Credentials**
-- Use test Gmail account only
+❌ **Production ACS Credentials**
+- Use project lead's dev ACS connection string only
 
 ## Safety Guidelines
 
@@ -128,8 +130,8 @@ curl -X DELETE http://localhost:3000/api/v1/subscription/test@example.com
 
 | Environment | Storage Account | Table Name | Email Account |
 |-------------|----------------|------------|---------------|
-| **Development** | mrtraderstore6111dev | subscriptions | test@gmail.com |
-| **Production** | mrtraderstore6111 | subscriptions | myresumator@gmail.com |
+| **Development** | mrtraderstore6111dev | subscriptions | Dev ACS resource |
+| **Production** | mrtraderstore6111 | subscriptions | ACS (`trader-comm-svcs`) |
 
 ## Debugging
 

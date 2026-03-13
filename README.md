@@ -206,7 +206,7 @@ All routes (except public confirmation) require API key authentication via the `
   - Azure Storage account (Table Storage and Blob Storage)
   - Azure Container Apps (for backend deployment)
   - Azure Static Web Apps (for frontend deployment)
-- Gmail account with an App Password for SMTP
+- Azure Communication Services resource (for email)
 
 ### Backend Setup
 
@@ -224,8 +224,8 @@ npm run dev
 ```bash
 cd frontend
 npm install
-cp .env.example .env
-# Set VITE_API_URL and VITE_API_KEY
+cp .env.example .env.local
+# Set VITE_API_URL and VITE_API_KEY (local dev values)
 npm run dev
 ```
 
@@ -235,26 +235,30 @@ npm run dev
 
 ### Backend
 
-| Variable                        | Description                             |
-| ------------------------------- | --------------------------------------- |
-| `EMAIL_USER`                    | Gmail address for sending emails        |
-| `EMAIL_PASS`                    | Gmail App Password                      |
-| `BLOB_STORAGE_BASE_URL`         | Azure Blob Storage base URL             |
-| `AZURE_STORAGE_ACCOUNT_NAME`    | Azure Storage account name              |
-| `AZURE_STORAGE_ACCOUNT_KEY`     | Storage account key (local dev only)    |
-| `FOUNDRY_PROJECT_ENDPOINT`      | Azure AI Foundry project endpoint       |
-| `FOUNDRY_MODEL_DEPLOYMENT_NAME` | Model deployment name (gpt-4o)          |
-| `FOUNDRY_API_KEY`               | Azure AI Foundry API key                |
-| `SEND_MAIL_API_KEY`             | API key for route authentication        |
-| `FRONTEND_URL`                  | Frontend URL for confirmation redirects |
-| `ENABLE_SCHEDULER`              | Enable/disable cron scheduler           |
+| Variable                        | Description                                                |
+| ------------------------------- | ---------------------------------------------------------- |
+| `ACS_CONNECTION_STRING`         | Azure Communication Services connection string             |
+| `ACS_SENDER_ADDRESS`            | ACS MailFrom address (e.g. `DoNotReply@<guid>.azurecomm.net`) |
+| `BLOB_STORAGE_BASE_URL`         | Azure Blob Storage base URL                                |
+| `AZURE_STORAGE_ACCOUNT_NAME`    | Azure Storage account name                                 |
+| `AZURE_STORAGE_ACCOUNT_KEY`     | Storage account key (local dev only)                       |
+| `FOUNDRY_PROJECT_ENDPOINT`      | Azure AI Foundry project endpoint                          |
+| `FOUNDRY_MODEL_DEPLOYMENT_NAME` | Model deployment name (e.g. `gpt-4o`)                      |
+| `FOUNDRY_API_KEY`               | Azure AI Foundry API key                                   |
+| `SEND_MAIL_API_KEY`             | API key for route authentication                           |
+| `CORS_ORIGINS`                  | Comma-separated allowed origins (omit to allow all)        |
+| `FRONTEND_URL`                  | Frontend URL for confirmation redirects                    |
+| `API_URL`                       | Public backend URL (used in confirmation emails)           |
+| `ENABLE_SCHEDULER`              | Enable/disable cron scheduler                              |
 
 ### Frontend
 
-| Variable       | Description                        |
-| -------------- | ---------------------------------- |
-| `VITE_API_URL` | Backend API base URL               |
-| `VITE_API_KEY` | API key for authenticated requests |
+| Variable       | Description                        | File              |
+| -------------- | ---------------------------------- | ----------------- |
+| `VITE_API_URL` | Backend API base URL               | `.env.local` / `.env.production` |
+| `VITE_API_KEY` | API key for authenticated requests | `.env.local` / `.env.production` |
+
+> Use `.env.local` for local dev values and `.env.production` for production values. `vite dev` reads `.env.local`; `vite build` reads `.env.production`. Neither file is committed. See `frontend/.env.example` for the full template.
 
 ---
 
