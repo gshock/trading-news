@@ -1,7 +1,7 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 import { toast } from "react-toastify";
 import type { TabItem, Tab, TopicId, Topic } from "../types/tabs";
-import { Checkbox } from "./checkbox";
+import { Checkbox } from "./ui/checkbox";
 import {
   useSubscribe,
   useGetSubscription,
@@ -62,7 +62,7 @@ export function SubscriptionForm() {
     unsubscribeMutation.isPending ||
     statusQuery.isFetching;
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email || !isValidEmail(email)) {
       toast.error("Please enter a valid email address");
@@ -182,8 +182,7 @@ export function SubscriptionForm() {
               </p>
             )}
             <p className="text-xs text-(--text-muted) mt-1">
-              Since{" "}
-              {new Date(statusQuery.data.createdUtc).toLocaleDateString()}
+              Since {new Date(statusQuery.data.createdUtc).toLocaleDateString()}
             </p>
           </div>
         )}

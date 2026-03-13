@@ -1,4 +1,4 @@
-import type { CheckboxProps } from "../types/tabs";
+import type { CheckboxProps } from "../../types/tabs";
 
 export function Checkbox({ label, checked, onChange }: CheckboxProps) {
   return (
