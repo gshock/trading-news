@@ -28,8 +28,13 @@ const TOPICS: Topic[] = [
 ];
 
 export function SubscriptionForm() {
-  const [tab, setTab] = useState<TabItem>("subscribe");
-  const [email, setEmail] = useState("");
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const initialTabParam = searchParams.get("tab") as TabItem;
+  const initialTab = TABS.some(t => t.id === initialTabParam) ? initialTabParam : "subscribe";
+  const initialEmail = searchParams.get("email") || "";
+
+  const [tab, setTab] = useState<TabItem>(initialTab);
+  const [email, setEmail] = useState(initialEmail);
   const [topics, setTopics] = useState<TopicId[]>([]);
   const [statusSubmitted, setStatusSubmitted] = useState(false);
 

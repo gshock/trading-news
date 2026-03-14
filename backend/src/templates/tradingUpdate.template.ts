@@ -41,7 +41,7 @@ export class TradingUpdateTemplate {
     return rows;
   }
 
-  render(snapshotData: SnapshotIndex, title: string, forexEvents?: AgentResult<ForexEvent[]>, analysis?: string | null): string {
+  render(snapshotData: SnapshotIndex, title: string, forexEvents?: AgentResult<ForexEvent[]>, analysis?: string | null, unsubscribeUrl?: string): string {
     const { createdUtc, entries } = snapshotData;
 
     const date = formatLongDate(createdUtc);
@@ -52,6 +52,10 @@ export class TradingUpdateTemplate {
     const symbolCount = entries.length;
     const forexSection = forexEvents ? this.buildForexSection(forexEvents) : "";
     const analysisSection = this.buildAnalysisSection(analysis ?? null);
+
+    const footerText = unsubscribeUrl
+      ? `<a href="${unsubscribeUrl}" style="color:#3b82f6;text-decoration:underline;">Unsubscribe</a>`
+      : "You're receiving this as a subscriber.";
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -151,7 +155,7 @@ export class TradingUpdateTemplate {
                   </td>
                   <td style="text-align:right;">
                     <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#94a3b8;">
-                      You're receiving this as a subscriber.
+                      ${footerText}
                     </span>
                   </td>
                 </tr>
