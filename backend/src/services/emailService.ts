@@ -1,6 +1,7 @@
 import { EmailClient, type EmailMessage } from "@azure/communication-email";
 import { extname } from "node:path";
 import axios from "axios";
+import { createHmac } from "node:crypto";
 import type { SnapshotIndex } from "../types/snapshot.js";
 import type { PreMarketBriefing, ForexEvent, AgentResult } from "../agents/types.js";
 import { BlobStorageService } from "./blobStorageService.js";
@@ -47,6 +48,28 @@ export class EmailService {
     return Buffer.from(response.data).toString("base64");
   }
 
+  private getUnsubscribeUrl(email: string): string {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const secret = process.env.UNSUBSCRIBE_TOKEN_SECRET;
+    if (!secret) {
+      throw new Error(
+        "EmailService configuration error: UNSUBSCRIBE_TOKEN_SECRET environment variable must be set.",
+      );
+    }
+
+    const payload = {
+      email,
+      iat: Math.floor(Date.now() / 1000),
+    };
+
+    const payloadJson = JSON.stringify(payload);
+    const payloadBase64 = Buffer.from(payloadJson, "utf8").toString("base64url");
+    const signature = createHmac("sha256", secret).update(payloadBase64).digest("base64url");
+    const token = `${payloadBase64}.${signature}`;
+
+    return `${frontendUrl}/unsubscribe?token=${encodeURIComponent(token)}`;
+  }
+
   async sendTradingUpdate(
     snapshotData: SnapshotIndex,
     recipients: string[],
@@ -54,8 +77,6 @@ export class EmailService {
     forexEvents?: AgentResult<ForexEvent[]>,
     analysis?: string | null,
   ): Promise<void> {
-    const html = this.tradingUpdateTemplate.render(snapshotData, title, forexEvents, analysis);
-
     try {
       const attachments = await Promise.all(
         snapshotData.entries.map(async (entry) => {
@@ -72,19 +93,41 @@ export class EmailService {
         }),
       );
 
-      const message: EmailMessage = {
-        senderAddress: this.senderAddress,
-        content: {
-          subject: `${title} — ${formatLongDate(snapshotData.createdUtc)}`,
-          html,
-        },
-        recipients: {
-          bcc: recipients.map((email) => ({ address: email })),
-        },
-        attachments,
-      };
-      const poller = await this.client.beginSend(message);
-      await poller.pollUntilDone();
+      const batchSize = 10;
+      for (let i = 0; i < recipients.length; i += batchSize) {
+        const batch = recipients.slice(i, i + batchSize);
+
+        await Promise.all(
+          batch.map(async (email) => {
+            try {
+              const unsubscribeUrl = this.getUnsubscribeUrl(email);
+              const html = this.tradingUpdateTemplate.render(
+                snapshotData,
+                title,
+                forexEvents,
+                analysis,
+                unsubscribeUrl,
+              );
+
+              const message: EmailMessage = {
+                senderAddress: this.senderAddress,
+                content: {
+                  subject: `${title} — ${formatLongDate(snapshotData.createdUtc)}`,
+                  html,
+                },
+                recipients: {
+                  to: [{ address: email }],
+                },
+                attachments,
+              };
+              const poller = await this.client.beginSend(message);
+              await poller.pollUntilDone();
+            } catch (error) {
+              console.error(`Failed to send trading update to ${email}:`, error);
+            }
+          }),
+        );
+      }
     } catch (error) {
       throw new Error(
         `Failed to send email: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -96,7 +139,6 @@ export class EmailService {
     briefing: PreMarketBriefing,
     recipients: string[],
   ): Promise<void> {
-    const html = this.preMarketBriefingTemplate.render(briefing);
     const date = formatLongDate(briefing.generatedAt);
 
     const attachments: { name: string; contentType: string; contentInBase64: string; contentId: string }[] = [];
@@ -109,28 +151,29 @@ export class EmailService {
       });
     }
 
-    const message: EmailMessage = {
-      senderAddress: this.senderAddress,
-      content: {
-        subject: `Pre-Market Briefing — ${date}`,
-        html,
-      },
-      recipients: {
-        bcc: recipients.map((email) => ({ address: email })),
-      },
-      attachments,
-    };
+    await Promise.all(recipients.map(async (email) => {
+      try {
+        const unsubscribeUrl = this.getUnsubscribeUrl(email);
+        const html = this.preMarketBriefingTemplate.render(briefing, unsubscribeUrl);
 
-    try {
-      const poller = await this.client.beginSend(message);
-      await poller.pollUntilDone();
-    } catch (error) {
-      throw new Error(
-        `Failed to send pre-market briefing email: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-      );
-    }
+        const message: EmailMessage = {
+          senderAddress: this.senderAddress,
+          content: {
+            subject: `Pre-Market Briefing — ${date}`,
+            html,
+          },
+          recipients: {
+            to: [{ address: email }],
+          },
+          attachments,
+        };
+
+        const poller = await this.client.beginSend(message);
+        await poller.pollUntilDone();
+      } catch (error) {
+        console.error(`Failed to send pre-market briefing email to ${email}:`, error);
+      }
+    }));
   }
 
   async sendConfirmationEmail(

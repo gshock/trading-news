@@ -9,7 +9,7 @@ import type {
 import { formatLongDate, formatSentAt } from "../utils/formatDate.js";
 
 export class PreMarketBriefingTemplate {
-  render(briefing: PreMarketBriefing): string {
+  render(briefing: PreMarketBriefing, unsubscribeUrl?: string): string {
     const date = formatLongDate(briefing.generatedAt);
     const sentAt = formatSentAt();
 
@@ -18,6 +18,10 @@ export class PreMarketBriefingTemplate {
     const forexSection = this.buildForexSection(briefing.forexEvents);
     const earningsSection = this.buildEarningsSection(briefing.earnings);
     const analysisSection = this.buildAnalysisSection(briefing.analysis);
+
+    const footerLinks = unsubscribeUrl
+      ? `<br><a href="${unsubscribeUrl}" style="color:#3b82f6;text-decoration:underline;">Unsubscribe</a>`
+      : "";
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -67,6 +71,7 @@ export class PreMarketBriefingTemplate {
                   <td style="padding-top:16px;font-size:11px;color:#94a3b8;text-align:center;line-height:1.6;">
                     Data sourced from ForexFactory, CNN Markets, and Finviz.<br>
                     This briefing is for informational purposes only and does not constitute financial advice.
+                    ${footerLinks}
                   </td>
                 </tr>
               </table>

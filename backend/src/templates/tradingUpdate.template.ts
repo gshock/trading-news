@@ -6,6 +6,15 @@ export class TradingUpdateTemplate {
   private readonly COLS = 2;
   private readonly CELL_WIDTH = 280;
 
+  private escapeHtmlAttribute(value: string): string {
+    return value
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
   private buildChartCell(entry: SnapshotEntry): string {
     const cid = `chart-${entry.symbol.toLowerCase()}`;
     return `
@@ -41,7 +50,7 @@ export class TradingUpdateTemplate {
     return rows;
   }
 
-  render(snapshotData: SnapshotIndex, title: string, forexEvents?: AgentResult<ForexEvent[]>, analysis?: string | null): string {
+  render(snapshotData: SnapshotIndex, title: string, forexEvents?: AgentResult<ForexEvent[]>, analysis?: string | null, unsubscribeUrl?: string): string {
     const { createdUtc, entries } = snapshotData;
 
     const date = formatLongDate(createdUtc);
@@ -52,6 +61,19 @@ export class TradingUpdateTemplate {
     const symbolCount = entries.length;
     const forexSection = forexEvents ? this.buildForexSection(forexEvents) : "";
     const analysisSection = this.buildAnalysisSection(analysis ?? null);
+
+    let footerText: string;
+    if (unsubscribeUrl) {
+      try {
+        const normalizedUrl = new URL(unsubscribeUrl).toString();
+        const safeHref = this.escapeHtmlAttribute(normalizedUrl);
+        footerText = `<a href="${safeHref}" style="color:#3b82f6;text-decoration:underline;">Unsubscribe</a>`;
+      } catch {
+        footerText = "You're receiving this as a subscriber.";
+      }
+    } else {
+      footerText = "You're receiving this as a subscriber.";
+    }
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -151,7 +173,7 @@ export class TradingUpdateTemplate {
                   </td>
                   <td style="text-align:right;">
                     <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#94a3b8;">
-                      You're receiving this as a subscriber.
+                      ${footerText}
                     </span>
                   </td>
                 </tr>
