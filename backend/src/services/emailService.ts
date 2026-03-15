@@ -1,6 +1,7 @@
 import { EmailClient, type EmailMessage } from "@azure/communication-email";
 import { extname } from "node:path";
 import axios from "axios";
+import { createHmac } from "node:crypto";
 import type { SnapshotIndex } from "../types/snapshot.js";
 import type { PreMarketBriefing, ForexEvent, AgentResult } from "../agents/types.js";
 import { BlobStorageService } from "./blobStorageService.js";
@@ -49,7 +50,24 @@ export class EmailService {
 
   private getUnsubscribeUrl(email: string): string {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    return `${frontendUrl}?tab=unsubscribe&email=${encodeURIComponent(email)}`;
+    const secret = process.env.UNSUBSCRIBE_TOKEN_SECRET;
+    if (!secret) {
+      throw new Error(
+        "EmailService configuration error: UNSUBSCRIBE_TOKEN_SECRET environment variable must be set.",
+      );
+    }
+
+    const payload = {
+      email,
+      iat: Math.floor(Date.now() / 1000),
+    };
+
+    const payloadJson = JSON.stringify(payload);
+    const payloadBase64 = Buffer.from(payloadJson, "utf8").toString("base64url");
+    const signature = createHmac("sha256", secret).update(payloadBase64).digest("base64url");
+    const token = `${payloadBase64}.${signature}`;
+
+    return `${frontendUrl}/unsubscribe?token=${encodeURIComponent(token)}`;
   }
 
   async sendTradingUpdate(
