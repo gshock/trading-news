@@ -4,6 +4,13 @@ Trading Daily is an automated financial intelligence system that delivers action
 
 ---
 
+## Live Azure Deployment
+The application is live and accessible at:
+
+🔗 https://polite-pond-0a06a4e0f.1.azurestaticapps.net/
+
+---
+
 ## Problem Statement
 
 Traders spend significant time each morning gathering data from multiple sources i.e economic calendars, sentiment indicators, earnings reports, and technical charts before they can form a trading plan. This manual process is time consuming, inconsistent, and prone to missing critical information.

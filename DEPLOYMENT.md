@@ -42,6 +42,7 @@ The following environment variables are configured as secrets in Azure Container
 ### API Security
 
 - `SEND_MAIL_API_KEY` - Shared secret key that protects the `/send-mail` and `/agents/run` endpoints. Clients must pass this value in the `x-api-key` header (or as `Authorization: Bearer <key>`). Generate with: `openssl rand -hex 32`
+- `UNSUBSCRIBE_TOKEN_SECRET` - HMAC-SHA256 secret used to sign the one-time unsubscribe tokens embedded in all outgoing emails. Generate with: `openssl rand -hex 32`
 - `CORS_ORIGINS` - Comma-separated list of allowed CORS origins (e.g. `https://polite-pond-0a06a4e0f.1.azurestaticapps.net`). If omitted, all origins are allowed (fine for development, lock down in production).
 
 ### Azure AI Foundry
@@ -52,12 +53,19 @@ The following environment variables are configured as secrets in Azure Container
 
 ### Scheduler
 
-- `ENABLE_SCHEDULER` - Set to `true` (default) to start the built-in cron job that fires at 5:30 AM EST Mon–Fri, or `false` to disable it (on-demand only via `/agents/run`)
+- `ENABLE_SCHEDULER` - Set to `true` (default) to start the built-in cron jobs, or `false` to disable (on-demand only). Three jobs run Mon–Fri (America/New_York):
+  - **5:30 AM** — Pre-market briefing (sent to `530AM` topic subscribers)
+  - **9:46 AM** — ORB 9:45 AM preview email (sent to `945AM` topic subscribers)
+  - **10:01 AM** — Full ORB 10:00 AM email (sent to `10AM` topic subscribers)
 
 ### URLs
 
 - `API_URL` - Public base URL of this backend, used to build the confirmation link in subscription emails (e.g. `https://trading-news-backend.salmonflower-e01ae160.eastus2.azurecontainerapps.io/api/v1`)
-- `FRONTEND_URL` - Public URL of the primary frontend, used to redirect users after email confirmation (e.g. `https://polite-pond-0a06a4e0f.1.azurestaticapps.net`)
+- `FRONTEND_URL` - Public URL of the primary frontend, used to redirect users after email confirmation and to build unsubscribe links in emails (e.g. `https://polite-pond-0a06a4e0f.1.azurestaticapps.net`)
+
+### Prompts
+
+- `PROMPT_ENV` - Which prompt folder to load from `backend/prompts/`. Set to `prod` in Azure and `dev` locally.
 
 **Note:** For local development with Table Storage, add `AZURE_STORAGE_ACCOUNT_KEY` to your `.env` file (see `backend/.env.example`). In Azure, the app uses managed identity automatically.
 
@@ -149,6 +157,24 @@ curl -X POST \
   -H "x-api-key: YOUR_SEND_MAIL_API_KEY"
 ```
 
+Trigger an on-demand ORB 9:45 AM run (requires `x-api-key` header):
+
+```bash
+curl -X POST \
+  https://trading-news-backend.salmonflower-e01ae160.eastus2.azurecontainerapps.io/api/v1/orb/run-945 \
+  -H "x-api-key: YOUR_SEND_MAIL_API_KEY"
+```
+
+Run a full ORB preview using the previous session's candles (optional test email):
+
+```bash
+curl -X POST \
+  https://trading-news-backend.salmonflower-e01ae160.eastus2.azurecontainerapps.io/api/v1/orb/preview \
+  -H "x-api-key: YOUR_SEND_MAIL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@example.com"}'
+```
+
 Manually send a previously-generated briefing email by its snapshot timestamp:
 
 ```bash
@@ -162,7 +188,8 @@ curl -X POST \
 List all subscribers:
 
 ```bash
-curl https://trading-news-backend.salmonflower-e01ae160.eastus2.azurecontainerapps.io/api/v1/subscriptions
+curl -H "x-api-key: YOUR_SEND_MAIL_API_KEY" \
+  https://trading-news-backend.salmonflower-e01ae160.eastus2.azurecontainerapps.io/api/v1/subscriptions
 ```
 
 ### 4. View Logs
@@ -199,6 +226,7 @@ API key and Foundry secrets:
 az containerapp secret set --name trading-news-backend --resource-group TraderRG \
   --secrets \
     "send-mail-api-key=<your-generated-key>" \
+    "unsubscribe-token-secret=<your-generated-secret>" \
     "foundry-project-endpoint=https://<hub>.services.ai.azure.com/models" \
     "foundry-model-deployment-name=gpt-4o" \
     "foundry-api-key=<your-foundry-api-key>"
@@ -213,10 +241,12 @@ az containerapp update --name trading-news-backend --resource-group TraderRG \
     ACS_SENDER_ADDRESS=secretref:acs-sender-address \
     BLOB_STORAGE_BASE_URL=secretref:blob-storage-base-url \
     SEND_MAIL_API_KEY=secretref:send-mail-api-key \
+    UNSUBSCRIBE_TOKEN_SECRET=secretref:unsubscribe-token-secret \
     FOUNDRY_PROJECT_ENDPOINT=secretref:foundry-project-endpoint \
     FOUNDRY_MODEL_DEPLOYMENT_NAME=secretref:foundry-model-deployment-name \
     FOUNDRY_API_KEY=secretref:foundry-api-key \
     ENABLE_SCHEDULER=true \
+    PROMPT_ENV=prod \
     CORS_ORIGINS="https://polite-pond-0a06a4e0f.1.azurestaticapps.net" \
     API_URL="https://trading-news-backend.salmonflower-e01ae160.eastus2.azurecontainerapps.io/api/v1" \
     FRONTEND_URL="https://polite-pond-0a06a4e0f.1.azurestaticapps.net"
@@ -231,8 +261,14 @@ az containerapp update --name trading-news-backend --resource-group TraderRG \
 | GET | `/` | — | Health check |
 | POST | `/api/v1/agents/run` | `x-api-key` | Run a full pre-market briefing on demand (rate limit: 5/hr) |
 | GET | `/api/v1/agents/status` | — | Get scheduler info and next run time |
+| POST | `/api/v1/orb/run-945` | `x-api-key` | Trigger ORB 9:45 AM run on demand (rate limit: 5/hr) |
+| POST | `/api/v1/orb/run-1000` | `x-api-key` | Trigger ORB 10:00 AM run on demand (rate limit: 5/hr) |
+| POST | `/api/v1/orb/preview` | `x-api-key` | Run ORB pipeline on previous session's candles (rate limit: 5/hr) |
 | POST | `/api/v1/send-mail` | `x-api-key` | Re-send a briefing email by snapshot timestamp (rate limit: 10/hr) |
 | POST | `/api/v1/subscribe` | `x-api-key` | Add a subscription |
+| GET | `/api/v1/subscription/confirm` | — | Legacy redirect: hands off old confirmation links to frontend |
+| POST | `/api/v1/subscription/confirm` | — | Activate a pending subscription by token (called by frontend) |
+| POST | `/api/v1/subscription/unsubscribe` | — | Public token-based unsubscribe (validates HMAC token from email link) |
 | GET | `/api/v1/subscription/:email` | `x-api-key` | Get a single subscriber's record |
 | PUT | `/api/v1/subscription/:email/status` | `x-api-key` | Update subscriber status (`active` / `unsubscribed`) |
 | DELETE | `/api/v1/subscription/:email` | `x-api-key` | Delete a subscriber |
