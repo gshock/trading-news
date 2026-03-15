@@ -68,7 +68,7 @@ The frontend provides a clean subscription management portal with:
 
 |             Light Mode              |             Dark Mode             |
 | :---------------------------------: | :-------------------------------: |
-| ![Light Mode UI](light-mode-ui.PNG) | ![Dark Mode UI](dark-mode-ui.PNG) |
+| ![Light Mode UI](assets/light-mode-ui.PNG) | ![Dark Mode UI](assets/dark-mode-ui.PNG) |
 
 ---
 
@@ -288,4 +288,20 @@ npm run dev
 
 ## Architecture Diagram
 
-![Architecture Diagram](architectural-image.jpg)
+![Architecture Diagram](assets/architectural-image.jpg)
+
+---
+
+## Email Screenshots
+
+### Pre-Market Briefing (5:30 AM)
+
+| | |
+|:---:|:---:|
+| ![Pre-Market Briefing 1](assets/am1.png) | ![Pre-Market Briefing 2](assets/am2.png) |
+
+### Opening Range Bias (9:45 AM / 10:00 AM)
+
+| | |
+|:---:|:---:|
+| ![ORB Email 1](assets/orb1.png) | ![ORB Email 2](assets/orb2.png) |
