@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { toast } from "react-toastify";
-import type { TabItem, Tab, TopicId, Topic } from "../types/tabs";
-import { Checkbox } from "./checkbox";
+import type { TabItem, Tab, TopicId } from "../types/tabs";
+import { Checkbox } from "./ui/checkbox";
 import {
   useSubscribe,
   useGetSubscription,
@@ -22,10 +22,6 @@ const CTA_LABEL: Record<TabItem, string> = {
   unsubscribe: "Unsubscribe",
 };
 
-const TOPICS: Topic[] = [
-  { id: "945AM", label: "9:45 AM" },
-  { id: "10AM", label: "10:00 AM" },
-];
 
 export function SubscriptionForm() {
   const [tab, setTab] = useState<TabItem>("subscribe");
@@ -62,7 +58,7 @@ export function SubscriptionForm() {
     unsubscribeMutation.isPending ||
     statusQuery.isFetching;
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email || !isValidEmail(email)) {
       toast.error("Please enter a valid email address");
@@ -70,7 +66,7 @@ export function SubscriptionForm() {
     }
 
     if (tab === "subscribe" && topics.length === 0) {
-      toast.error("Please select at least one session (9:45 AM or 10:00 AM)");
+      toast.error("Please select at least one session");
       return;
     }
 
@@ -128,21 +124,35 @@ export function SubscriptionForm() {
         />
 
         {tab === "subscribe" && (
-          <div className="mb-4">
-            <p className="text-[10px] font-bold text-(--text-secondary) tracking-[0.15em] uppercase mb-3">
-              Sessions
-            </p>
-            <div className="flex gap-3">
-              {TOPICS.map((topic) => (
-                <Checkbox
-                  key={topic.id}
-                  label={topic.label}
-                  checked={topics.includes(topic.id)}
-                  onChange={() => toggleTopic(topic.id)}
-                />
-              ))}
+          <>
+            <div className="mb-4">
+              <p className="text-[10px] font-bold text-(--text-secondary) tracking-[0.15em] uppercase mb-3">
+                AM Analysis
+              </p>
+              <Checkbox
+                label="5:30 AM"
+                checked={topics.includes("530AM")}
+                onChange={() => toggleTopic("530AM")}
+              />
             </div>
-          </div>
+            <div className="mb-4">
+              <p className="text-[10px] font-bold text-(--text-secondary) tracking-[0.15em] uppercase mb-3">
+                Sector Snapshot
+              </p>
+              <div className="flex gap-3">
+                <Checkbox
+                  label="9:45 AM"
+                  checked={topics.includes("945AM")}
+                  onChange={() => toggleTopic("945AM")}
+                />
+                <Checkbox
+                  label="10:00 AM"
+                  checked={topics.includes("10AM")}
+                  onChange={() => toggleTopic("10AM")}
+                />
+              </div>
+            </div>
+          </>
         )}
 
         <button
@@ -182,8 +192,7 @@ export function SubscriptionForm() {
               </p>
             )}
             <p className="text-xs text-(--text-muted) mt-1">
-              Since{" "}
-              {new Date(statusQuery.data.createdUtc).toLocaleDateString()}
+              Since {new Date(statusQuery.data.createdUtc).toLocaleDateString()}
             </p>
           </div>
         )}

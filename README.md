@@ -1,6 +1,6 @@
-# Market Snapshot Automated Pre-Market Intelligence Platform
+# Trading Daily — Automated Pre-Market Intelligence Platform
 
-Market Snapshot is an automated financial intelligence system that delivers actionable pre-market briefings to traders every weekday morning. The platform orchestrates multiple data-collection agents, synthesizes market insights using Azure AI Foundry (GPT-4o), and distributes professional briefings via email all before the U.S. market opens.
+Trading Daily is an automated financial intelligence system that delivers actionable pre-market briefings to traders every weekday morning. The platform orchestrates multiple data-collection agents, synthesizes market insights using Azure AI Foundry (GPT-4o), and distributes professional briefings via email all before the U.S. market opens.
 
 ---
 
@@ -8,7 +8,7 @@ Market Snapshot is an automated financial intelligence system that delivers acti
 
 Traders spend significant time each morning gathering data from multiple sources i.e economic calendars, sentiment indicators, earnings reports, and technical charts before they can form a trading plan. This manual process is time consuming, inconsistent, and prone to missing critical information.
 
-Market Snapshot solves this by automating the entire pre-market research workflow. Subscribers receive a single, AI analyzed briefing covering all major market factors at 5:30 AM EST, giving them a comprehensive view of the trading day ahead without switching between multiple platforms.
+Trading Daily solves this by automating the entire pre-market research workflow. Subscribers receive a single, AI analyzed briefing covering all major market factors at 5:30 AM EST, giving them a comprehensive view of the trading day ahead without switching between multiple platforms.
 
 ---
 
@@ -71,7 +71,7 @@ The frontend provides a clean subscription management portal with:
 
 **Swing Traders** — The weekly SPY chart analysis with SMA trend positioning provides a macro context for multi-day trade decisions, delivered consistently without manual chart review.
 
-**Trading Communities and Educators** — Newsletter operators can use Market Snapshot as a content backbone, distributing professional-grade market analysis to their audience on a consistent schedule.
+**Trading Communities and Educators** — Newsletter operators can use Trading Daily as a content backbone, distributing professional-grade market analysis to their audience on a consistent schedule.
 
 **Portfolio Managers** — Stay informed of high-impact economic events and earnings that could affect holdings, with sentiment context from the Fear and Greed Index.
 
@@ -280,4 +280,4 @@ npm run dev
 
 ## Architecture Diagram
 
-[Architecture diagram to be added]
+![Architecture Diagram](architectural-image.jfif)

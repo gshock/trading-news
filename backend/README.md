@@ -1,41 +1,52 @@
+# Trading Daily — Backend
+
+Express.js API server that orchestrates pre-market data collection agents, AI-powered analysis, and email delivery via Azure Communication Services.
+
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js
-- npm 
+- Node.js 20+
+- npm 10+
 
 ### Installation
 
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
+```bash
+cd backend
+npm install
+npx playwright install chromium --with-deps
+```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+### Environment Variables
 
-3. Set up environment variables:
-   Create a `.env` file in the `backend` directory and add the following:
-   ```env
-   PORT=3000
-   EMAIL_USER=segdavid03@gmail.com
-   EMAIL_PASS=khxcttvijwaxpzeh
-   ```
+Copy the example file and fill in your values:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Description |
+| --- | --- |
+| `ACS_CONNECTION_STRING` | Azure Communication Services connection string |
+| `ACS_SENDER_ADDRESS` | ACS MailFrom address |
+| `BLOB_STORAGE_BASE_URL` | Azure Blob Storage base URL |
+| `AZURE_STORAGE_ACCOUNT_NAME` | Azure Storage account name (local dev) |
+| `AZURE_STORAGE_ACCOUNT_KEY` | Storage account key (local dev) |
+| `FOUNDRY_PROJECT_ENDPOINT` | Azure AI Foundry project endpoint |
+| `FOUNDRY_MODEL_DEPLOYMENT_NAME` | Model deployment name (e.g. `gpt-4o`) |
+| `FOUNDRY_API_KEY` | Azure AI Foundry API key |
+| `SEND_MAIL_API_KEY` | API key for route authentication |
+| `CORS_ORIGINS` | Comma-separated allowed origins |
+| `FRONTEND_URL` | Frontend URL for confirmation redirects |
+| `API_URL` | Public backend URL (used in confirmation emails) |
+| `ENABLE_SCHEDULER` | Enable/disable cron scheduler |
 
 ### Development
 
 Start the development server with hot-reloading:
+
 ```bash
 npm run dev
 ```
+
 The server will be running at `http://localhost:3000`.
-
-
-## Email Notification Feature
-
-The backend includes a dedicated endpoint to test email notifications for now using the GET /send-email endpoint. 
-
-Later on, we will implement a more complex email notification system implementing a scheduler to send emails at specific times.
