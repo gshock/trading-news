@@ -93,28 +93,41 @@ export class EmailService {
         }),
       );
 
-      await Promise.all(recipients.map(async (email) => {
-        try {
-          const unsubscribeUrl = this.getUnsubscribeUrl(email);
-          const html = this.tradingUpdateTemplate.render(snapshotData, title, forexEvents, analysis, unsubscribeUrl);
+      const batchSize = 10;
+      for (let i = 0; i < recipients.length; i += batchSize) {
+        const batch = recipients.slice(i, i + batchSize);
 
-          const message: EmailMessage = {
-            senderAddress: this.senderAddress,
-            content: {
-              subject: `${title} — ${formatLongDate(snapshotData.createdUtc)}`,
-              html,
-            },
-            recipients: {
-              to: [{ address: email }],
-            },
-            attachments,
-          };
-          const poller = await this.client.beginSend(message);
-          await poller.pollUntilDone();
-        } catch (error) {
-          console.error(`Failed to send trading update to ${email}:`, error);
-        }
-      }));
+        await Promise.all(
+          batch.map(async (email) => {
+            try {
+              const unsubscribeUrl = this.getUnsubscribeUrl(email);
+              const html = this.tradingUpdateTemplate.render(
+                snapshotData,
+                title,
+                forexEvents,
+                analysis,
+                unsubscribeUrl,
+              );
+
+              const message: EmailMessage = {
+                senderAddress: this.senderAddress,
+                content: {
+                  subject: `${title} — ${formatLongDate(snapshotData.createdUtc)}`,
+                  html,
+                },
+                recipients: {
+                  to: [{ address: email }],
+                },
+                attachments,
+              };
+              const poller = await this.client.beginSend(message);
+              await poller.pollUntilDone();
+            } catch (error) {
+              console.error(`Failed to send trading update to ${email}:`, error);
+            }
+          }),
+        );
+      }
     } catch (error) {
       throw new Error(
         `Failed to send email: ${error instanceof Error ? error.message : "Unknown error"}`,
