@@ -59,8 +59,8 @@ The frontend provides a clean subscription management portal with:
 - Light and dark mode with system preference detection and manual toggle
 - Mobile-responsive layout
 
-| Light Mode | Dark Mode |
-|:---:|:---:|
+|             Light Mode              |             Dark Mode             |
+| :---------------------------------: | :-------------------------------: |
 | ![Light Mode UI](light-mode-ui.PNG) | ![Dark Mode UI](dark-mode-ui.PNG) |
 
 ---
@@ -89,7 +89,7 @@ The frontend provides a clean subscription management portal with:
 | **Azure Container Apps**                    | Hosts the backend API and scheduled agent pipeline with Managed Identity support                    |
 | **Azure Static Web Apps**                   | Hosts the frontend subscription portal with SPA routing and security headers                        |
 | **Azure Identity (DefaultAzureCredential)** | Provides credential management across Azure services using Managed Identity in production           |
-| **Azure Communication Services (Email)**    | Sends transactional emails (subscription confirmations and pre-market briefings) via ACS Email     |
+| **Azure Communication Services (Email)**    | Sends transactional emails (subscription confirmations and pre-market briefings) via ACS Email      |
 
 ### Frontend
 
@@ -105,16 +105,16 @@ The frontend provides a clean subscription management portal with:
 
 ### Backend
 
-| Technology                         | Purpose                                             |
-| ---------------------------------- | --------------------------------------------------- |
-| **Express.js 5**                   | REST API framework                                  |
-| **TypeScript**                     | Type-safe server development                        |
-| **Node-Cron**                      | Scheduled task execution                            |
-| **Playwright**                     | Headless browser automation for web scraping agents |
+| Technology                           | Purpose                                             |
+| ------------------------------------ | --------------------------------------------------- |
+| **Express.js 5**                     | REST API framework                                  |
+| **TypeScript**                       | Type-safe server development                        |
+| **Node-Cron**                        | Scheduled task execution                            |
+| **Playwright**                       | Headless browser automation for web scraping agents |
 | **Azure Communication Services SDK** | Email delivery via ACS Email                        |
-| **Chart.js + chartjs-node-canvas** | Server-side chart rendering to PNG                  |
-| **express-rate-limit**             | API rate limiting                                   |
-| **Docker**                         | Containerized deployment                            |
+| **Chart.js + chartjs-node-canvas**   | Server-side chart rendering to PNG                  |
+| **express-rate-limit**               | API rate limiting                                   |
+| **Docker**                           | Containerized deployment                            |
 
 ### Azure SDKs
 
@@ -237,26 +237,26 @@ npm run dev
 
 ### Backend
 
-| Variable                        | Description                                                |
-| ------------------------------- | ---------------------------------------------------------- |
-| `ACS_CONNECTION_STRING`         | Azure Communication Services connection string             |
+| Variable                        | Description                                                   |
+| ------------------------------- | ------------------------------------------------------------- |
+| `ACS_CONNECTION_STRING`         | Azure Communication Services connection string                |
 | `ACS_SENDER_ADDRESS`            | ACS MailFrom address (e.g. `DoNotReply@<guid>.azurecomm.net`) |
-| `BLOB_STORAGE_BASE_URL`         | Azure Blob Storage base URL                                |
-| `AZURE_STORAGE_ACCOUNT_NAME`    | Azure Storage account name                                 |
-| `AZURE_STORAGE_ACCOUNT_KEY`     | Storage account key (local dev only)                       |
-| `FOUNDRY_PROJECT_ENDPOINT`      | Azure AI Foundry project endpoint                          |
-| `FOUNDRY_MODEL_DEPLOYMENT_NAME` | Model deployment name (e.g. `gpt-4o`)                      |
-| `FOUNDRY_API_KEY`               | Azure AI Foundry API key                                   |
-| `SEND_MAIL_API_KEY`             | API key for route authentication                           |
-| `CORS_ORIGINS`                  | Comma-separated allowed origins (omit to allow all)        |
-| `FRONTEND_URL`                  | Frontend URL for confirmation redirects                    |
-| `API_URL`                       | Public backend URL (used in confirmation emails)           |
-| `ENABLE_SCHEDULER`              | Enable/disable cron scheduler                              |
+| `BLOB_STORAGE_BASE_URL`         | Azure Blob Storage base URL                                   |
+| `AZURE_STORAGE_ACCOUNT_NAME`    | Azure Storage account name                                    |
+| `AZURE_STORAGE_ACCOUNT_KEY`     | Storage account key (local dev only)                          |
+| `FOUNDRY_PROJECT_ENDPOINT`      | Azure AI Foundry project endpoint                             |
+| `FOUNDRY_MODEL_DEPLOYMENT_NAME` | Model deployment name (e.g. `gpt-4o`)                         |
+| `FOUNDRY_API_KEY`               | Azure AI Foundry API key                                      |
+| `SEND_MAIL_API_KEY`             | API key for route authentication                              |
+| `CORS_ORIGINS`                  | Comma-separated allowed origins (omit to allow all)           |
+| `FRONTEND_URL`                  | Frontend URL for confirmation redirects                       |
+| `API_URL`                       | Public backend URL (used in confirmation emails)              |
+| `ENABLE_SCHEDULER`              | Enable/disable cron scheduler                                 |
 
 ### Frontend
 
-| Variable       | Description                        | File              |
-| -------------- | ---------------------------------- | ----------------- |
+| Variable       | Description                        | File                             |
+| -------------- | ---------------------------------- | -------------------------------- |
 | `VITE_API_URL` | Backend API base URL               | `.env.local` / `.env.production` |
 | `VITE_API_KEY` | API key for authenticated requests | `.env.local` / `.env.production` |
 
@@ -280,4 +280,4 @@ npm run dev
 
 ## Architecture Diagram
 
-![Architecture Diagram](architectural-image.jfif)
+![Architecture Diagram](architectural-image.jpg)
