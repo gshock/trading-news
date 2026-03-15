@@ -6,7 +6,7 @@ React subscription portal for managing email subscriptions to pre-market briefin
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 18+
 - npm 10+
 
 ### Installation
