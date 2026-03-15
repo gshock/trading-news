@@ -7,8 +7,41 @@ interface ConfirmPageProps {
   onBack: () => void;
 }
 
+const TOPIC_LABELS: Record<string, { label: string; group: string }> = {
+  "530AM":  { label: "5:30 AM",  group: "AM Analysis" },
+  "945AM":  { label: "9:45 AM",  group: "Sector Snapshot" },
+  "10AM":   { label: "10:00 AM", group: "Sector Snapshot" },
+};
+
+function TopicBadges({ topics }: { topics: string }) {
+  const ids = topics.split(",").map((t) => t.trim()).filter(Boolean);
+  if (ids.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5 justify-center mt-3">
+      {ids.map((id) => {
+        const meta = TOPIC_LABELS[id];
+        return (
+          <span
+            key={id}
+            className="inline-flex flex-col px-2.5 py-1 rounded border border-blue-500/30 bg-blue-600/10"
+          >
+            <span className="text-[9px] text-blue-400 font-semibold tracking-wider uppercase leading-none">
+              {meta?.group ?? id}
+            </span>
+            <span className="text-xs text-(--text-heading) font-semibold mt-0.5">
+              {meta?.label ?? id}
+            </span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ConfirmPage({ token, onBack }: ConfirmPageProps) {
   const confirmMutation = useConfirmSubscription();
+
+  const successTopics = confirmMutation.isSuccess ? confirmMutation.data.topics : null;
 
   return (
     <PageLayout>
@@ -20,18 +53,21 @@ export function ConfirmPage({ token, onBack }: ConfirmPageProps) {
         }
         description={
           confirmMutation.isSuccess
-            ? "Pre-market chart updates will arrive every weekday at 5:30 AM EST."
+            ? "Your Market Snapshot updates have been activated."
             : "Click below to activate your Market Snapshot subscription."
         }
       />
 
       <div className="bg-(--bg-card) border border-(--border-card) rounded-lg overflow-hidden p-6 transition-colors duration-300">
         {confirmMutation.isSuccess ? (
-          <p className="text-sm font-semibold text-green-500 text-center">
-            {confirmMutation.data.message === "already_confirmed"
-              ? "Your subscription is already active."
-              : "Subscription confirmed!"}
-          </p>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-green-500">
+              {confirmMutation.data.message === "already_confirmed"
+                ? "Your subscription is already active."
+                : "Subscription confirmed!"}
+            </p>
+            {successTopics && <TopicBadges topics={successTopics} />}
+          </div>
         ) : confirmMutation.isError ? (
           <div className="text-center">
             <p className="text-sm text-red-400 mb-4">

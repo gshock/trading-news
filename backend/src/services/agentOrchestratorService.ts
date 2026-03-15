@@ -95,11 +95,11 @@ export class AgentOrchestratorService {
         recipients = [previewEmail];
         console.log(`[Orchestrator] Preview mode — sending to ${previewEmail} only.`);
       } else {
-        const subscribers = await this.tableStorageService.listSubscriptionsByStatus("active");
+        const subscribers = await this.tableStorageService.listSubscriptionsByTopic("530AM");
         recipients = subscribers.map((s) => s.rowKey);
       }
       if (recipients.length > 0) {
-        await this.emailService.sendPreMarketBriefing(briefing, recipients);
+        await this.emailService.sendPreMarketBriefing(briefing, recipients, "530AM");
         console.log(`[Orchestrator] Briefing emailed to ${recipients.length} recipient(s).`);
       } else {
         console.log("[Orchestrator] No active subscribers — skipping email.");

@@ -107,7 +107,7 @@ export class OrbOrchestratorService {
 
       if (recipients.length > 0) {
         const title = EMAIL_TITLES[runType];
-        await this.emailService.sendTradingUpdate(snapshotIndex, recipients, title, forexResult, analysis);
+        await this.emailService.sendTradingUpdate(snapshotIndex, recipients, title, forexResult, analysis, topic);
         console.log(`[OrbOrchestrator] Email sent to ${recipients.length} subscriber(s) (topic: ${topic})`);
       } else {
         console.log(`[OrbOrchestrator] No subscribers for topic "${topic}" — skipping email`);

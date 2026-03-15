@@ -58,3 +58,10 @@ export function useConfirmSubscription() {
     mutationFn: (token: string) => subscriptionApi.confirmSubscription(token),
   });
 }
+
+export function useUnsubscribeByToken() {
+  return useMutation({
+    mutationFn: ({ token, topics }: { token: string; topics: string[] }) =>
+      subscriptionApi.unsubscribeByToken(token, topics),
+  });
+}

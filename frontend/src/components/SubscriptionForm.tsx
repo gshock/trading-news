@@ -22,6 +22,12 @@ const CTA_LABEL: Record<TabItem, string> = {
   unsubscribe: "Unsubscribe",
 };
 
+const TOPIC_LABELS: Record<string, { label: string; group: string }> = {
+  "530AM":  { label: "5:30 AM",  group: "AM Analysis" },
+  "945AM":  { label: "9:45 AM",  group: "Sector Snapshot" },
+  "10AM":   { label: "10:00 AM", group: "Sector Snapshot" },
+};
+
 
 const getInitialTab = (): TabItem => {
   if (typeof window === "undefined") {
@@ -202,22 +208,45 @@ export function SubscriptionForm() {
         )}
 
         {tab === "status" && statusSubmitted && statusQuery.data && (
-          <div className="mt-4 p-3 rounded bg-(--status-bg) border border-(--border-card)">
+          <div className="mt-4 p-3 rounded bg-(--status-bg) border border-(--border-card) space-y-2">
             <p className="text-xs text-(--text-secondary)">
               Status:{" "}
               <span className="text-(--text-heading) font-semibold">
-                {statusQuery.data.status}
+                {statusQuery.data.status === "active" ? "subscribed" : statusQuery.data.status}
               </span>
             </p>
-            {statusQuery.data.topics && (
-              <p className="text-xs text-(--text-secondary) mt-1">
-                Topics:{" "}
-                <span className="text-(--text-heading)">
-                  {statusQuery.data.topics}
-                </span>
-              </p>
-            )}
-            <p className="text-xs text-(--text-muted) mt-1">
+            {statusQuery.data.topics && (() => {
+              const ids = statusQuery.data.topics!
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean);
+              return (
+                <div>
+                  <p className="text-[10px] font-bold text-(--text-secondary) tracking-[0.12em] uppercase mb-1.5">
+                    Subscribed topics
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {ids.map((id) => {
+                      const meta = TOPIC_LABELS[id];
+                      return (
+                        <span
+                          key={id}
+                          className="inline-flex flex-col px-2.5 py-1 rounded border border-blue-500/30 bg-blue-600/10"
+                        >
+                          <span className="text-[9px] text-blue-400 font-semibold tracking-wider uppercase leading-none">
+                            {meta?.group ?? id}
+                          </span>
+                          <span className="text-xs text-(--text-heading) font-semibold mt-0.5">
+                            {meta?.label ?? id}
+                          </span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+            <p className="text-xs text-(--text-muted)">
               Since {new Date(statusQuery.data.createdUtc).toLocaleDateString()}
             </p>
           </div>

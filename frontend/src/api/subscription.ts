@@ -32,7 +32,18 @@ export async function deleteSubscription(email: string): Promise<DeleteSubscript
   return res.data;
 }
 
-export async function confirmSubscription(token: string): Promise<{ message: string }> {
-  const res = await api.post<{ message: string }>("/subscription/confirm", { token });
+export async function confirmSubscription(token: string): Promise<{ message: string; topics: string | null }> {
+  const res = await api.post<{ message: string; topics: string | null }>("/subscription/confirm", { token });
+  return res.data;
+}
+
+export async function unsubscribeByToken(
+  token: string,
+  topics?: string[],
+): Promise<{ message: string; email: string; remainingTopics?: string[] }> {
+  const res = await api.post<{ message: string; email: string; remainingTopics?: string[] }>(
+    "/subscription/unsubscribe",
+    { token, ...(topics && topics.length > 0 ? { topics } : {}) },
+  );
   return res.data;
 }

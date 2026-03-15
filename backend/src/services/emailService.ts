@@ -48,7 +48,7 @@ export class EmailService {
     return Buffer.from(response.data).toString("base64");
   }
 
-  private getUnsubscribeUrl(email: string): string {
+  private getUnsubscribeUrl(email: string, topic?: string): string {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     const secret = process.env.UNSUBSCRIBE_TOKEN_SECRET;
     if (!secret) {
@@ -57,10 +57,11 @@ export class EmailService {
       );
     }
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       email,
       iat: Math.floor(Date.now() / 1000),
     };
+    if (topic) payload.topic = topic;
 
     const payloadJson = JSON.stringify(payload);
     const payloadBase64 = Buffer.from(payloadJson, "utf8").toString("base64url");
@@ -76,6 +77,7 @@ export class EmailService {
     title: string,
     forexEvents?: AgentResult<ForexEvent[]>,
     analysis?: string | null,
+    topic?: string,
   ): Promise<void> {
     try {
       const attachments = await Promise.all(
@@ -100,7 +102,7 @@ export class EmailService {
         await Promise.all(
           batch.map(async (email) => {
             try {
-              const unsubscribeUrl = this.getUnsubscribeUrl(email);
+              const unsubscribeUrl = this.getUnsubscribeUrl(email, topic);
               const html = this.tradingUpdateTemplate.render(
                 snapshotData,
                 title,
@@ -138,6 +140,7 @@ export class EmailService {
   async sendPreMarketBriefing(
     briefing: PreMarketBriefing,
     recipients: string[],
+    topic?: string,
   ): Promise<void> {
     const date = formatLongDate(briefing.generatedAt);
 
@@ -153,7 +156,7 @@ export class EmailService {
 
     await Promise.all(recipients.map(async (email) => {
       try {
-        const unsubscribeUrl = this.getUnsubscribeUrl(email);
+        const unsubscribeUrl = this.getUnsubscribeUrl(email, topic);
         const html = this.preMarketBriefingTemplate.render(briefing, unsubscribeUrl);
 
         const message: EmailMessage = {

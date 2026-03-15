@@ -223,4 +223,42 @@ export class TableStorageService {
 
     await this.tableClient.deleteEntity(partitionKey, normalizedEmail);
   }
+
+  /**
+   * Remove specific topics from a subscription.
+   * If no topics remain after removal, the subscription is marked "unsubscribed".
+   * Returns the remaining topics.
+   */
+  async removeTopicsFromSubscription(
+    email: string,
+    topicsToRemove: string[],
+  ): Promise<string[]> {
+    const subscription = await this.getSubscription(email);
+    if (!subscription) {
+      throw new Error(`Subscription not found for ${email}`);
+    }
+
+    const current = subscription.topics
+      ? subscription.topics.split(",").map((t) => t.trim()).filter(Boolean)
+      : [];
+    const removeLower = topicsToRemove.map((t) => t.trim().toLowerCase());
+    const remaining = current.filter((t) => !removeLower.includes(t.toLowerCase()));
+
+    if (remaining.length === 0) {
+      await this.updateSubscriptionStatus(email, "unsubscribed");
+      return [];
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    await this.tableClient.updateEntity(
+      {
+        partitionKey: "recipients",
+        rowKey: normalizedEmail,
+        topics: remaining.join(", "),
+        status: "active",
+      },
+      "Merge",
+    );
+    return remaining;
+  }
 }
