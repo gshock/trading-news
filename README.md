@@ -268,7 +268,8 @@ npm run dev
 
 | Name | Microsoft Learn Username |
 | ---- | ------------------------ |
-|      |                          |
+| Gerardo Arevalo | GerardoArevalo-3702 |
+| David Segun | DavidSegun-0630 |
 
 ---
 
