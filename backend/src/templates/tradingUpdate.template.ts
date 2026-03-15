@@ -6,6 +6,15 @@ export class TradingUpdateTemplate {
   private readonly COLS = 2;
   private readonly CELL_WIDTH = 280;
 
+  private escapeHtmlAttribute(value: string): string {
+    return value
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
   private buildChartCell(entry: SnapshotEntry): string {
     const cid = `chart-${entry.symbol.toLowerCase()}`;
     return `
@@ -53,9 +62,18 @@ export class TradingUpdateTemplate {
     const forexSection = forexEvents ? this.buildForexSection(forexEvents) : "";
     const analysisSection = this.buildAnalysisSection(analysis ?? null);
 
-    const footerText = unsubscribeUrl
-      ? `<a href="${unsubscribeUrl}" style="color:#3b82f6;text-decoration:underline;">Unsubscribe</a>`
-      : "You're receiving this as a subscriber.";
+    let footerText: string;
+    if (unsubscribeUrl) {
+      try {
+        const normalizedUrl = new URL(unsubscribeUrl).toString();
+        const safeHref = this.escapeHtmlAttribute(normalizedUrl);
+        footerText = `<a href="${safeHref}" style="color:#3b82f6;text-decoration:underline;">Unsubscribe</a>`;
+      } catch {
+        footerText = "You're receiving this as a subscriber.";
+      }
+    } else {
+      footerText = "You're receiving this as a subscriber.";
+    }
 
     return `<!DOCTYPE html>
 <html lang="en">
