@@ -58,7 +58,7 @@ const getInitialEmail = (): string => {
 export function SubscriptionForm() {
   const [tab, setTab] = useState<TabItem>(() => getInitialTab());
   const [email, setEmail] = useState<string>(() => getInitialEmail());
-  const [topics, setTopics] = useState<TopicId[]>([]);
+  const [topics, setTopics] = useState<TopicId[]>(["530AM", "945AM", "10AM"]);
   const [statusSubmitted, setStatusSubmitted] = useState(false);
 
   const subscribeMutation = useSubscribe();
