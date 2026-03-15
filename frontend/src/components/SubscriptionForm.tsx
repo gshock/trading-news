@@ -27,14 +27,35 @@ const TOPICS: Topic[] = [
   { id: "10AM", label: "10:00 AM" },
 ];
 
-export function SubscriptionForm() {
-  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
-  const initialTabParam = searchParams.get("tab") as TabItem;
-  const initialTab = TABS.some(t => t.id === initialTabParam) ? initialTabParam : "subscribe";
-  const initialEmail = searchParams.get("email") || "";
+const getInitialTab = (): TabItem => {
+  if (typeof window === "undefined") {
+    return "subscribe";
+  }
 
-  const [tab, setTab] = useState<TabItem>(initialTab);
-  const [email, setEmail] = useState(initialEmail);
+  const searchParams = new URLSearchParams(window.location.search);
+  const tabParam = searchParams.get("tab");
+
+  if (TABS.some((t) => t.id === tabParam)) {
+    return tabParam as TabItem;
+  }
+
+  return "subscribe";
+};
+
+const getInitialEmail = (): string => {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const emailParam = searchParams.get("email");
+
+  return emailParam ?? "";
+};
+
+export function SubscriptionForm() {
+  const [tab, setTab] = useState<TabItem>(() => getInitialTab());
+  const [email, setEmail] = useState<string>(() => getInitialEmail());
   const [topics, setTopics] = useState<TopicId[]>([]);
   const [statusSubmitted, setStatusSubmitted] = useState(false);
 
