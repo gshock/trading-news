@@ -6,6 +6,7 @@ import { HeroSection } from "./components/HeroSection";
 import { ConfirmPage } from "./components/ConfirmPage";
 import { UnsubscribePage } from "./components/UnsubscribePage";
 import { SubscriptionForm } from "./components/SubscriptionForm";
+import { NewsletterPreview } from "./components/NewsletterPreview";
 
 function App() {
   const initialPendingToken = useConfirmRedirect();
@@ -40,6 +41,7 @@ function App() {
         description="Chart snapshots delivered to your inbox every session."
       />
       <SubscriptionForm />
+      <NewsletterPreview />
     </PageLayout>
   );
 }
