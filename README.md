@@ -282,7 +282,7 @@ npm run dev
 
 ## Demo Video
 
-[Link to demo video]
+[https://youtu.be/gYEbMF0FkvM](https://youtu.be/gYEbMF0FkvM)
 
 ---
 
